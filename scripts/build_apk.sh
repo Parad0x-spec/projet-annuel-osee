@@ -24,6 +24,6 @@ echo "Build APK debug..."
 flutter build apk --debug
 
 echo "Installation sur la tablette..."
-flutter install
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 echo "Termine. Lance l'application sur la tablette."
