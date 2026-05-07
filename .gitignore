@@ -1,0 +1,56 @@
+# Editeurs et IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+
+# Flutter / Dart
+tablette_flutter/.dart_tool/
+tablette_flutter/.flutter-plugins
+tablette_flutter/.flutter-plugins-dependencies
+tablette_flutter/.packages
+tablette_flutter/.pub-cache/
+tablette_flutter/.pub/
+tablette_flutter/build/
+tablette_flutter/android/.gradle/
+tablette_flutter/android/captures/
+tablette_flutter/android/gradlew
+tablette_flutter/android/gradlew.bat
+tablette_flutter/android/local.properties
+tablette_flutter/android/**/GeneratedPluginRegistrant.java
+tablette_flutter/android/key.properties
+tablette_flutter/android/app/release/
+tablette_flutter/android/app/debug/
+tablette_flutter/android/app/profile/
+tablette_flutter/ios/
+tablette_flutter/macos/
+tablette_flutter/linux/
+tablette_flutter/windows/
+tablette_flutter/web/
+tablette_flutter/coverage/
+tablette_flutter/test/.test_coverage.dart
+tablette_flutter/pubspec.lock
+
+# Go
+logiciel_pc_go/build/
+logiciel_pc_go/bin/
+logiciel_pc_go/*.exe
+logiciel_pc_go/*.dll
+logiciel_pc_go/*.so
+logiciel_pc_go/*.dylib
+logiciel_pc_go/*.test
+logiciel_pc_go/*.out
+logiciel_pc_go/coverage.out
+logiciel_pc_go/vendor/
+
+# Bases de donnees locales de developpement
+*.db
+*.sqlite
+*.sqlite3
+
+# Artefacts divers
+*.log
+*.tmp
+*.bak

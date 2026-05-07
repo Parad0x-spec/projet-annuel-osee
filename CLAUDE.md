@@ -8,16 +8,21 @@ Les deux applications ne communiquent jamais par internet. L'échange se fait un
 
 La présentation du projet est prévue fin juin. Le périmètre fin juin est volontairement réduit à un seul jeu, la reconnaissance des émotions sur des visages.
 
+## Emplacement local du projet
+
+Le dépôt est situé dans `~/Documents/Projets/Projet_Annuel_2025-2026/` sur un poste de développement Arch Linux.
+
 ## Stack technique
 
-L'application tablette est en Flutter ciblant Android. Le logiciel PC est en Go ciblant Windows par compilation croisée depuis Arch Linux. Le stockage local est SQLite des deux côtés. La génération et la lecture de QR utilisent une bibliothèque Flutter côté tablette et une bibliothèque Go côté PC. Aucun backend serveur, aucune API REST, aucune dépendance réseau autre que le protocole QR.
+L'application tablette est en Flutter 3.41 ciblant Android 13. Le logiciel PC est en Go 1.26 ciblant Windows par compilation croisée depuis Arch Linux. Le stockage local est SQLite des deux côtés. La génération et la lecture de QR utilisent une bibliothèque Flutter côté tablette et une bibliothèque Go côté PC. Aucun backend serveur, aucune API REST, aucune dépendance réseau autre que le protocole QR.
 
 ## Arborescence du dépôt
 
 ```
-projet_annuel/
+Projet_Annuel_2025-2026/
     CLAUDE.md                       fichier que tu lis en premier
     README.md                       presentation generale du depot
+    .gitignore                      exclusions Flutter et Go
     docs/
         cadrage/                    note de cadrage et plan
         sprints/                    plans detailles de chaque sprint
@@ -36,6 +41,9 @@ projet_annuel/
         go.mod
     shared/
         protocole_qr/               format de donnees commun documente
+    scripts/
+        build_apk.sh                build et installation Flutter sur tablette
+        build_pc_windows.sh         compilation croisee Go vers Windows
 ```
 
 ## Règles de fonctionnement avec Claude Code
@@ -65,6 +73,10 @@ Chaque ADR est un fichier `docs/adr/NN-titre-court.md`. Il contient le contexte 
 ## Convention pour les comptes rendus
 
 Chaque sprint a un fichier `docs/comptes_rendus/sprint_NN.md`. Il contient les objectifs initiaux, ce qui a été réellement fait, les décisions prises en cours de sprint, les défauts identifiés et les actions à reporter au sprint suivant. Le compte rendu est rédigé en prose, sans liste à puces.
+
+## Règle de validation par étapes
+
+Tu ne déroules jamais plusieurs tâches d'affilée sans validation. À la fin de chaque tâche tu t'arrêtes, tu décris ce que tu as fait et ce que la prochaine étape va faire, et tu attends une confirmation explicite avant de continuer. Cette règle est non négociable, elle existe pour que le porteur du projet reste maître de son code et puisse expliquer chaque décision en soutenance.
 
 ## État courant du projet
 
