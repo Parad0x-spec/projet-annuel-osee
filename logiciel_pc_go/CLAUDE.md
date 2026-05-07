@@ -10,7 +10,7 @@ Le `CLAUDE.md` racine du dépôt définit les règles globales du projet. Ce fic
 
 Le projet utilise Go 1.26. Le module est nommé `projet_annuel/logiciel_pc_go`. Les paquets retenus sont les suivants. Pour l'interface graphique, `fyne.io/fyne/v2` qui produit un binaire autonome et compile vers Windows depuis Linux. Pour SQLite, `modernc.org/sqlite` qui est un pilote pur Go et évite la dépendance à CGO ce qui simplifie énormément la compilation croisée vers Windows. Pour la génération de QR, `github.com/skip2/go-qrcode`. Pour le décodage de QR depuis une image webcam, `github.com/makiuchi-d/gozxing` couplé à `github.com/blackjack/webcam` pour la capture webcam Linux et son équivalent Windows en condition de production. Pour la cryptographie de signature, la bibliothèque standard `crypto/ed25519`.
 
-Aucun autre paquet ne doit être ajouté sans création préalable d'un ADR justifiant le choix. La règle CGO-free est essentielle pour garder la compilation croisée simple.
+Aucun autre paquet ne doit être ajouté sans création préalable d'un ADR justifiant le choix. La règle CGO-free reste non négociable pour le pilote SQLite (`modernc.org/sqlite`) et pour les modules métier purs (`internal/patients`, `internal/sessions`, `internal/storage`, `internal/crypto`), qui doivent demeurer compilables et testables sans dépendance C. Elle ne s'applique pas, par dérogation actée dans l'ADR-04, à la stack UI Fyne ni à la capture webcam via `github.com/pion/mediadevices`, faute d'alternative pure Go portable Linux et Windows. Ces deux dérogations sont périmétrées et ne valent pas blanc-seing pour de futures dépendances.
 
 ## Architecture côté PC
 
@@ -30,7 +30,7 @@ Les tests sont placés dans le même dossier que le code testé, dans des fichie
 
 Le build local pour test sous Linux se fait par `go run ./cmd/logiciel_pc`. La compilation croisée vers Windows se fait par `GOOS=windows GOARCH=amd64 go build -o build/logiciel_pc.exe ./cmd/logiciel_pc`. Cette commande est encapsulée dans le script `scripts/build_pc_windows.sh` à la racine du dépôt.
 
-L'absence de CGO grâce au choix `modernc.org/sqlite` permet de compiler vers Windows sans `mingw-w64`. C'est une décision structurante du projet qui doit être préservée. Toute proposition de paquet nécessitant CGO doit être refusée et redirigée vers une alternative pure Go.
+La compilation croisée vers Windows requiert le toolchain `mingw-w64-gcc` à cause de Fyne et de la capture webcam, dérogations CGO-free actées dans l'ADR-04. Le pilote SQLite reste en `modernc.org/sqlite` pour ne pas réintroduire de complexité supplémentaire, et les modules métier (`internal/patients`, `internal/sessions`, `internal/storage`, `internal/crypto`) doivent rester compilables sans dépendance C. Toute proposition de paquet CGO en dehors du périmètre déjà cadré (UI et webcam) doit être refusée ou justifiée par un nouvel ADR.
 
 ## Tests
 
