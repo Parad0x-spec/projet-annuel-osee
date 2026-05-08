@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/textes.dart';
 import '../controller.dart';
@@ -12,6 +13,7 @@ class AppairageScreen extends ConsumerWidget {
 
   static const double _largeurBoutonTactile = 360;
   static const double _hauteurBoutonTactile = 96;
+  static const double _tailleQR = 400;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,13 +23,14 @@ class AppairageScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text(Textes.titreAppairage)),
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(32),
             child: switch (etat) {
-              EtatAppairage.initial => _vueInitiale(context, ref),
-              EtatAppairage.enCours => _vueEnCours(),
-              EtatAppairage.reussi => _vueReussi(context, ref),
-              EtatAppairage.echec => _vueEchec(context, ref),
+              AppairageInitial() => _vueInitiale(context, ref),
+              AppairageEnCours() => _vueEnCours(),
+              AppairageReussi(:final chargeUtileQRRetour) =>
+                _vueReussi(context, ref, chargeUtileQRRetour),
+              AppairageEchec() => _vueEchec(context, ref),
             },
           ),
         ),
@@ -71,17 +74,32 @@ class AppairageScreen extends ConsumerWidget {
     );
   }
 
-  Widget _vueReussi(BuildContext context, WidgetRef ref) {
+  Widget _vueReussi(
+    BuildContext context,
+    WidgetRef ref,
+    String chargeUtileQRRetour,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.check_circle, color: Colors.green, size: 96),
-        const SizedBox(height: 24),
         Text(
-          Textes.messageAppairageReussi,
-          style: Theme.of(context).textTheme.headlineSmall,
+          Textes.consignePraticienScanner,
+          style: Theme.of(context).textTheme.titleLarge,
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: QrImageView(
+            data: chargeUtileQRRetour,
+            version: QrVersions.auto,
+            size: _tailleQR,
+            errorCorrectionLevel: QrErrorCorrectLevel.M,
+            backgroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 32),
         SizedBox(
           width: _largeurBoutonTactile,
           height: _hauteurBoutonTactile,
@@ -91,7 +109,7 @@ class AppairageScreen extends ConsumerWidget {
               context.go('/');
             },
             child: const Text(
-              Textes.boutonRetourAccueil,
+              Textes.boutonAppairageTermine,
               style: TextStyle(fontSize: 22),
             ),
           ),

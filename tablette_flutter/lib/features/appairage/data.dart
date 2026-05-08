@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../../core/crypto.dart';
 import '../../core/stockage.dart';
 import 'domain.dart';
 
@@ -58,5 +59,71 @@ class DecodeurEnveloppe {
     } catch (e) {
       throw EnveloppeInvalideException('decodage: $e');
     }
+  }
+}
+
+class QRRetour {
+  final String chargeUtileBase64;
+  final String enveloppeJSON;
+
+  const QRRetour({
+    required this.chargeUtileBase64,
+    required this.enveloppeJSON,
+  });
+}
+
+class GenerateurQRRetour {
+  GenerateurQRRetour._();
+
+  static Future<QRRetour> generer({
+    required String pairingId,
+    required List<int> tabPriv,
+    required List<int> tabPub,
+    DateTime? horodatage,
+  }) async {
+    final timestamp = (horodatage ?? DateTime.now().toUtc()).toIso8601String();
+    final payload = <String, dynamic>{
+      'pairing_id': pairingId,
+      'tab_pub': base64.encode(tabPub),
+    };
+
+    final donneesASigner = <String, dynamic>{
+      'type': typeAppairageTablette,
+      'version': versionProtocole,
+      'timestamp': timestamp,
+      'payload': payload,
+    };
+    final octetsASigner = utf8.encode(jsonEncode(donneesASigner));
+    final signature = await Crypto.signer(tabPriv, octetsASigner);
+
+    final enveloppe = <String, dynamic>{
+      'type': typeAppairageTablette,
+      'version': versionProtocole,
+      'timestamp': timestamp,
+      'payload': payload,
+      'signature': base64.encode(signature),
+    };
+    final enveloppeJSON = jsonEncode(enveloppe);
+    final octetsCompresses = ZLibCodec().encode(utf8.encode(enveloppeJSON));
+    final chargeUtileBase64 = base64.encode(octetsCompresses);
+
+    return QRRetour(
+      chargeUtileBase64: chargeUtileBase64,
+      enveloppeJSON: enveloppeJSON,
+    );
+  }
+
+  static String serialiserPourSignature({
+    required String type,
+    required int version,
+    required String timestamp,
+    required Map<String, dynamic> payload,
+  }) {
+    return jsonEncode(<String, dynamic>{
+      'type': type,
+      'version': version,
+      'timestamp': timestamp,
+      'payload': payload,
+    });
   }
 }

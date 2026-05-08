@@ -3,7 +3,31 @@ const String typeAppairageTablette = 'appairage_tablette';
 const String typeSession = 'session';
 const int versionProtocole = 1;
 
-enum EtatAppairage { initial, enCours, reussi, echec }
+sealed class EtatAppairage {
+  const EtatAppairage();
+}
+
+class AppairageInitial extends EtatAppairage {
+  const AppairageInitial();
+}
+
+class AppairageEnCours extends EtatAppairage {
+  const AppairageEnCours();
+}
+
+class AppairageReussi extends EtatAppairage {
+  final String chargeUtileQRRetour;
+  final String pairingId;
+
+  const AppairageReussi({
+    required this.chargeUtileQRRetour,
+    required this.pairingId,
+  });
+}
+
+class AppairageEchec extends EtatAppairage {
+  const AppairageEchec();
+}
 
 class Appairage {
   final String pairingId;

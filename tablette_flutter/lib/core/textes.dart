@@ -18,6 +18,10 @@ class Textes {
   static const String boutonRetourAccueil = 'Retour à l\'accueil';
   static const String boutonReessayer = 'Réessayer';
 
+  static const String consignePraticienScanner =
+      'Faites scanner ce QR au praticien depuis son PC.';
+  static const String boutonAppairageTermine = 'J\'ai terminé';
+
   static const String titreJeuPlaceholder = 'Jeu';
   static const String messageJeuPlaceholder =
       'Le jeu sera implémenté au sprint 3.';

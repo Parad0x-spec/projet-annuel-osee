@@ -27,10 +27,10 @@ final appairageActuelProvider = FutureProvider<Appairage?>((ref) async {
 
 class ControleurAppairage extends Notifier<EtatAppairage> {
   @override
-  EtatAppairage build() => EtatAppairage.initial;
+  EtatAppairage build() => const AppairageInitial();
 
   Future<void> traiterScan(String chargeUtileBase64) async {
-    state = EtatAppairage.enCours;
+    state = const AppairageEnCours();
     try {
       final enveloppe = DecodeurEnveloppe.decoder(chargeUtileBase64);
       if (enveloppe.type != typeAppairagePc) {
@@ -54,14 +54,24 @@ class ControleurAppairage extends Notifier<EtatAppairage> {
         tabPub: paireTablette.publique,
       );
       ref.invalidate(appairageActuelProvider);
-      state = EtatAppairage.reussi;
+
+      final qrRetour = await GenerateurQRRetour.generer(
+        pairingId: pairingId,
+        tabPriv: paireTablette.privee,
+        tabPub: paireTablette.publique,
+      );
+
+      state = AppairageReussi(
+        chargeUtileQRRetour: qrRetour.chargeUtileBase64,
+        pairingId: pairingId,
+      );
     } catch (_) {
-      state = EtatAppairage.echec;
+      state = const AppairageEchec();
     }
   }
 
   void reinitialiser() {
-    state = EtatAppairage.initial;
+    state = const AppairageInitial();
   }
 }
 
