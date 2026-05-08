@@ -13,7 +13,12 @@ cd logiciel_pc_go
 mkdir -p build
 
 echo "Compilation croisee Go vers Windows..."
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build \
+export CC=x86_64-w64-mingw32-gcc
+export CXX=x86_64-w64-mingw32-g++
+export CGO_ENABLED=1
+export GOOS=windows
+export GOARCH=amd64
+go build \
     -ldflags="-s -w" \
     -o build/logiciel_pc.exe \
     ./cmd/logiciel_pc
