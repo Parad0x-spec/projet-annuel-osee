@@ -19,7 +19,7 @@ export CGO_ENABLED=1
 export GOOS=windows
 export GOARCH=amd64
 go build \
-    -ldflags="-s -w -extldflags '-static-libgcc -static-libstdc++'" \
+    -ldflags="-s -w -extldflags '-static'" \
     -o build/logiciel_pc.exe \
     ./cmd/logiciel_pc
 
