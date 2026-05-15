@@ -50,11 +50,13 @@ Inchangé par rapport à la version 1. Généré par la tablette en réponse au 
 
 ### Message `creation_patient`
 
-Nouveau dans la version 2. Généré par le PC au moment où le praticien clique sur "Démarrer une séance pour ce patient" dans le logiciel PC. Le `payload` contient deux champs.
+Nouveau dans la version 2. Généré par le PC au moment où le praticien clique sur "Démarrer une séance pour ce patient" dans le logiciel PC. Le `payload` contient trois champs.
 
 Le premier champ est `patient_id`, qui est l'identifiant anonyme unique de ce patient dans la base PC. Il est généré sous forme d'UUID v4 au moment de la création du patient et ne change jamais. C'est cet identifiant qui sera repris par la tablette dans le message `session` de fin de séance, ce qui permet au PC de rattacher les données reçues à la bonne fiche nominative.
 
 Le second champ est `patient_initiales`, qui contient les initiales du patient sous forme d'une chaîne de 2 à 3 caractères majuscules. Ce champ existe uniquement pour permettre à la tablette d'afficher au praticien une confirmation visuelle du type "Patient MD chargé, prêt à jouer". Le praticien peut ainsi vérifier en un coup d'œil qu'il n'a pas scanné le mauvais QR. Les initiales ne sont pas persistées sur la tablette au-delà de la session en cours.
+
+Le troisième champ est `niveau_demande`, qui est un entier compris entre 1 et 5 correspondant aux cinq niveaux de difficulté du jeu des émotions. Il est saisi par le praticien dans le logiciel PC au moment de générer le QR, sur la base de son jugement clinique. La tablette applique strictement ce niveau pour la session sans le modifier. Ce champ matérialise dans le protocole la décision tracée par l'ADR-07 de confier au praticien les choix qui dépendent de l'historique nominatif, plutôt que de les déléguer à un moteur d'adaptation automatique côté tablette.
 
 Le message est signé par le PC avec sa `pc_priv`. La tablette vérifie cette signature à la réception avec la `pc_pub` reçue lors de l'appairage. Si la signature est invalide, le QR est rejeté avec le message d'erreur "Patient non vérifié, l'appairage a peut-être été perdu".
 
@@ -72,9 +74,9 @@ Le scénario nominal d'une séance est le suivant.
 
 Au préalable, l'appairage a été fait une fois pour toutes lors de la première mise en service. La tablette et le PC connaissent leurs clés publiques mutuelles.
 
-Le praticien lance le logiciel PC, sélectionne un patient existant dans sa base ou en crée un nouveau s'il s'agit d'une première séance. Il clique sur "Démarrer une séance" pour ce patient. Le logiciel PC génère un message `creation_patient` signé contenant le `patient_id` et les `patient_initiales` du patient sélectionné, et l'affiche sous forme de QR dans une nouvelle fenêtre.
+Le praticien lance le logiciel PC, sélectionne un patient existant dans sa base ou en crée un nouveau s'il s'agit d'une première séance. Il choisit le niveau de difficulté de la séance sur la base de son jugement clinique, puis clique sur "Démarrer une séance" pour ce patient. Le logiciel PC génère un message `creation_patient` signé contenant le `patient_id`, les `patient_initiales` et le `niveau_demande`, et l'affiche sous forme de QR dans une nouvelle fenêtre.
 
-Le praticien prend la tablette, lance l'application, et clique sur "Nouveau patient" sur l'écran d'accueil. La tablette ouvre directement la caméra arrière pour scanner le QR. Le praticien pointe la caméra vers le QR affiché sur le PC. La tablette décode le QR, vérifie la signature avec `pc_pub`, extrait le `patient_id` et les `patient_initiales`, et affiche un écran de confirmation "Patient MD chargé. Prêt à jouer.". Le praticien valide et la tablette enchaîne sur la sélection du jeu.
+Le praticien prend la tablette, lance l'application, et clique sur "Nouveau patient" sur l'écran d'accueil. La tablette ouvre directement la caméra arrière pour scanner le QR. Le praticien pointe la caméra vers le QR affiché sur le PC. La tablette décode le QR, vérifie la signature avec `pc_pub`, extrait le `patient_id`, les `patient_initiales` et le `niveau_demande`, et affiche un écran de confirmation "Patient MD chargé. Prêt à jouer.". Le praticien valide et la tablette enchaîne sur la sélection du jeu, qui démarrera directement au niveau reçu.
 
 Le patient joue. La tablette accumule les métriques en mémoire et en base SQLite locale, rattachées au `patient_id` courant.
 
