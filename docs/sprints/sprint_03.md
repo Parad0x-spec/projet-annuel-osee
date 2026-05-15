@@ -1,47 +1,59 @@
-# Sprint 3 - Jeu des émotions
+# Sprint 3 - Jeu des émotions et création patient côté PC
 
 ## Objectif
 
-Implémenter le premier jeu cognitif complet sur la tablette : le jeu de reconnaissance d'émotions dans une planche dense, inspiré du format "Où est Charlie". À la fin du sprint, une session complète peut être jouée sur la Lenovo Tab P12 et exportée vers le logiciel PC par QR code.
+Livrer le premier jeu cognitif complet sur la tablette, et implémenter côté PC le minimum nécessaire pour créer un patient et générer son QR de séance. À la fin du sprint, le scénario suivant doit fonctionner de bout en bout : le praticien crée un patient sur le PC, génère son QR, le scanne avec la tablette, lance le jeu des émotions, joue une session, exporte les données par QR retour, et le PC stocke les métriques rattachées au bon patient.
 
-La spécification fonctionnelle complète du jeu est dans `docs/specs/jeu_emotions.md`. Ce plan ne refait pas le détail de la spec, il enchaîne les tâches techniques nécessaires pour la livrer.
+Le sprint 4 enrichira ensuite le côté PC avec les fiches patients détaillées, le graphique d'évolution, et la génération du fichier Excel mère.
+
+Ce plan révisé succède au plan initial du sprint 3 daté d'avant le recalibrage tracé dans l'ADR-07. La spec du jeu des émotions reste valide en l'état, c'est principalement la partie identification patient qui change : elle est entièrement reprise côté PC.
 
 ## Pré-requis
 
-Le sprint 2 doit être clos, ce qui signifie que le canal QR bidirectionnel est fonctionnel, que la cross-compile Windows est validée, et que le compte rendu du sprint 2 est écrit. Sans ces fondations, le sprint 3 ne peut pas être démarré.
+Le sprint 2 doit être clos. Cela inclut le canal QR bidirectionnel fonctionnel, la cross-compile Windows validée, et le compte rendu écrit. La nouvelle spec QR version 2 doit également être adoptée et tracée dans le protocole.
 
-La banque d'images Open Peeps doit être constituée et présente dans le dépôt avant la première tâche d'implémentation du jeu. Cette constitution est une tâche préparatoire à part entière, c'est la tâche 1 du sprint.
+Le code déjà livré au sprint 2 reste valide à l'exception de deux choses qui seront retirées ou neutralisées en début de sprint. D'abord, la table patient prévue dans le module stockage côté tablette n'est pas implémentée. Ensuite, le routage conditionnel actuel de l'écran d'accueil sur la tablette ("Nouveau patient" qui va vers `/jeu` si appairé, vers `/appairage` sinon) est repensé pour intégrer le scan du QR patient en début de séance.
 
 ## Tâches du sprint
 
-La première tâche est la constitution de la banque d'images. Elle consiste à parcourir Open Peeps, sélectionner ou composer pour chaque émotion (joie, tristesse, colère, peur, surprise, dégoût) un ensemble de visages variés en termes de coiffures, traits, accessoires. Les images sont normalisées au format PNG avec fond transparent, taille 200×200 pixels, et rangées dans `tablette_flutter/assets/visages/<emotion>/` avec un nommage explicite. Un minimum de 8 visages par émotion est visé pour permettre une diversité raisonnable dans la composition des planches.
+La première tâche est l'adoption de la nouvelle spec QR version 2 dans le code. Cela couvre la mise à jour du package `internal/qr` côté PC et du module `lib/features/appairage/data.dart` côté tablette pour reconnaître le champ `version = 2` à la place de `version = 1`, et pour ajouter le nouveau type de message `creation_patient`. Le code des deux côtés rejette explicitement les messages version 1 avec le message d'erreur prévu.
 
-La deuxième tâche est l'implémentation du module de stockage côté tablette pour les patients et les sessions. Le schéma SQLite est étendu avec une table `patient` (id, initiales, identifiant_aleatoire, date_creation) et une table `session` (id, patient_id, date_debut, date_fin, niveau, score_global, payload_json) qui stocke le payload complet en JSON pour pouvoir le re-générer en cas de besoin. Les tests unitaires couvrent les opérations CRUD.
+La deuxième tâche est l'implémentation côté PC du module `internal/patients`. Cela couvre le schéma SQLite de la table patient (id, patient_id qui est l'UUID anonyme, nom, prenom, initiales, date_naissance, date_creation, notes), les opérations CRUD, et les tests unitaires. Le module utilise `modernc.org/sqlite` comme déjà acté à l'ADR-03.
 
-La troisième tâche est l'implémentation de la feature `profil_patient/`. Cela inclut l'écran de sélection ou création de patient, la logique de génération de l'identifiant aléatoire unique, et le couplage avec le stockage. Les tests de widget couvrent les deux cas (patient existant et nouveau patient).
+La troisième tâche est l'implémentation côté PC de l'écran de création et sélection de patient dans la fenêtre Fyne. Cela couvre une liste des patients existants avec recherche par nom, un bouton "Nouveau patient" qui ouvre un formulaire de saisie, et un bouton "Démarrer une séance" sur chaque patient sélectionné qui appelle la nouvelle fonction de génération de QR patient.
 
-La quatrième tâche est l'implémentation de la logique métier du jeu, sans interface graphique. Cela couvre les types métier dans `lib/features/jeu_emotions/domain.dart`, la fonction de composition de planche, la fonction de calcul de score, et la fonction d'évaluation de fin de manche. Les tests unitaires couvrent tous ces calculs avec table-driven tests pour balayer les niveaux et les cas limites.
+La quatrième tâche est l'implémentation côté PC de la génération du QR `creation_patient` dans le module `internal/qr`. Cela couvre la construction de l'enveloppe avec le type `creation_patient` et la version 2, la signature avec `pc_priv`, l'encodage selon la chaîne JSON canonique + zlib + base64 + QR, et l'affichage dans une fenêtre Fyne secondaire.
 
-La cinquième tâche est l'implémentation du moteur d'adaptation de difficulté dans `lib/features/jeu_emotions/adaptation.dart`. Cela couvre la décision de monter ou descendre de niveau selon les sessions précédentes, la règle d'hystérésis, et le mécanisme de forçage par le praticien. Tests unitaires obligatoires.
+La cinquième tâche est l'implémentation côté tablette de la réception du QR `creation_patient`. Cela couvre l'adaptation du décodeur d'enveloppe pour reconnaître ce nouveau type, la vérification de la signature avec `pc_pub` issue de la base d'appairage, l'extraction du `patient_id` et des `patient_initiales`, et l'affichage de l'écran de confirmation "Patient MD chargé. Prêt à jouer." avec un bouton pour démarrer le jeu.
 
-La sixième tâche est l'implémentation de l'interface graphique du jeu. Cela couvre l'écran de consigne et planche, le rendu des visages dans une grille pseudo-aléatoire, la gestion des taps avec retours visuels, sonores et haptiques, l'écran de transition entre manches, et l'écran récapitulatif de fin de session. Les tests de widget couvrent les interactions principales.
+La sixième tâche est l'adaptation de l'écran d'accueil côté tablette pour la nouvelle cinématique. Le bouton "Nouveau patient" ouvre maintenant directement le scanner caméra qui attend un QR `creation_patient`. Le routage conditionnel actuel basé uniquement sur la présence d'appairage est conservé pour l'appairage initial mais étendu pour gérer le cas "appairage présent mais pas de patient chargé".
 
-La septième tâche est l'intégration de l'export de session par QR vers le PC. Le payload session est construit selon la spec QR, signé avec la clé privée de la tablette, compressé et encodé selon la chaîne déjà utilisée pour l'appairage, et affiché dans un QR. Si le payload dépasse la capacité d'un QR, la mécanique de découpage en plusieurs QR successifs est activée (déjà spécifiée dans `docs/specs/protocole_qr.md`).
+La septième tâche est la constitution de la banque d'images Open Peeps pour le jeu des émotions. Cela couvre la sélection ou composition de visages pour chaque émotion (joie, tristesse, colère, peur, surprise, dégoût), avec un minimum de 8 variantes par émotion, format PNG 200×200 transparent, rangées dans `tablette_flutter/assets/visages/<emotion>/`. Cette tâche est faite tôt parce que c'est le risque principal du sprint.
 
-La huitième tâche est le test manuel complet sur Lenovo Tab P12 d'une session de bout en bout, du choix du patient à l'export du QR. Cette tâche n'est pas une tâche de code mais une tâche de validation indispensable. Les retours sur l'ergonomie, la fluidité, et l'expérience utilisateur sont consignés dans le compte rendu du sprint et alimentent les ajustements éventuels du sprint suivant.
+La huitième tâche est l'implémentation de la logique métier du jeu des émotions, sans interface graphique. Cela couvre les types métier dans `lib/features/jeu_emotions/domain.dart`, la fonction de composition de planche pseudo-aléatoire, la fonction de calcul de score, et la fonction d'évaluation de fin de manche. Tests unitaires obligatoires.
 
-La neuvième tâche est la rédaction du compte rendu de sprint dans `docs/comptes_rendus/sprint_03.md`.
+La neuvième tâche est l'implémentation du moteur d'adaptation de difficulté dans `lib/features/jeu_emotions/adaptation.dart`. Cela couvre la décision de monter ou descendre de niveau selon les sessions précédentes, la règle d'hystérésis, et le mécanisme de forçage par le praticien depuis le QR `creation_patient` (qui pourra optionnellement transporter un niveau forcé dans une future version mineure du protocole, à débattre).
+
+La dixième tâche est l'implémentation de l'interface graphique du jeu. Cela couvre l'écran de consigne et planche, le rendu des visages dans une grille pseudo-aléatoire, la gestion des taps avec retours visuels sonores et haptiques, l'écran de transition entre manches, et l'écran récapitulatif de fin de session.
+
+La onzième tâche est l'intégration de l'export de session par QR vers le PC. Le payload `session` contient maintenant le `patient_id` reçu en début de séance, conformément à la spec QR version 2.
+
+La douzième tâche est l'implémentation côté PC de la réception du QR `session`. Le PC vérifie la signature, extrait le `patient_id`, et insère les métriques dans une table `sessions` rattachée à la table `patients`. Pour cette première version, l'affichage des sessions reçues est minimal, juste un message de confirmation. Les écrans de fiche détaillée et graphique d'évolution sont au sprint 4.
+
+La treizième tâche est le test manuel complet sur Lenovo Tab P12 plus PC Windows d'une session de bout en bout. Cette tâche valide le critère d'acceptation du sprint.
+
+La quatorzième tâche est la rédaction du compte rendu de sprint dans `docs/comptes_rendus/sprint_03.md`.
 
 ## Critères d'acceptation
 
-Le sprint est validé quand un patient fictif peut être créé sur la tablette par ses initiales, qu'une session complète de cinq manches peut être jouée sur le jeu des émotions avec les retours visuels et sonores corrects, que les métriques de session sont bien stockées en SQLite, que le QR de session peut être généré et qu'il contient un payload conforme à la spec QR signé correctement. Tous les tests unitaires et de widget passent.
+Le sprint est validé quand la démonstration suivante peut être faite. Le praticien lance le logiciel PC, crée un patient fictif avec ses nom prénom date de naissance, clique sur "Démarrer une séance", un QR s'affiche. Il prend la tablette, clique sur "Nouveau patient", scanne le QR du PC, la tablette confirme "Patient MD chargé". Le patient fictif joue une session complète au jeu des émotions avec les retours visuels corrects et les métriques bien stockées. La tablette génère un QR retour. Le praticien revient sur le PC, scanne le QR retour avec la webcam, le PC affiche "Session reçue pour le patient MD" et insère les données en base.
 
-La validation finale par le PC qui scannerait le QR de session n'est pas dans le périmètre du sprint 3, elle sera couverte par le sprint 4 quand le PC saura recevoir et stocker une vraie session.
+Tous les tests unitaires et de widget passent.
 
 ## Risques sur ce sprint
 
-Le risque principal est la production de la banque d'images. Si Open Peeps ne permet pas de générer facilement des expressions distinctes pour les six émotions, il faudra soit dessiner manuellement les visages manquants, soit chercher une banque complémentaire, soit réduire le nombre d'émotions du jeu. Cette tâche est donc faite en premier pour pouvoir replanifier si nécessaire.
+Le risque principal reste la constitution de la banque d'images Open Peeps. Si la bibliothèque ne permet pas de générer facilement des expressions distinctes pour les six émotions, il faudra adapter avec une banque complémentaire ou réduire le nombre d'émotions du jeu. La tâche 7 est positionnée tôt dans le sprint pour pouvoir replanifier si nécessaire.
 
-Le second risque est la performance d'affichage de planches denses sur la Tab P12. Une vérification précoce avec une planche factice de 56 visages doit être faite dès la sixième tâche pour s'assurer que Flutter rend ça à 60 fps.
+Le second risque est la complexité de l'écran de gestion patients côté PC. Une UI Fyne avec liste, recherche, formulaire, et bouton d'action demande du soin pour rester ergonomique. Il faudra rester sobre et fonctionnel sans chercher à faire joli, le polish viendra au sprint 4.
 
-Le troisième risque est l'équilibrage du jeu, qui ne peut pas être validé sans tests sur de vrais patients. La huitième tâche couvre un premier test manuel par le porteur du projet, mais l'équilibrage réel ne sera affiné qu'après recette terrain au sprint 5.
+Le troisième risque est le volume de travail du sprint qui est sensiblement plus important que les sprints précédents puisqu'il combine du travail côté PC et côté tablette. Une attention particulière sera portée à ne pas dériver sur des fonctionnalités non essentielles et à tenir le périmètre.
