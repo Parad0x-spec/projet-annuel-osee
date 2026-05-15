@@ -33,7 +33,7 @@ La fin de session intervient au bout d'un nombre fixé de manches, typiquement c
 
 ## Niveaux de difficulté
 
-Le jeu propose plusieurs niveaux de difficulté. Le niveau courant du patient est déterminé par le moteur d'adaptation qui se base sur ses performances précédentes, mais le praticien peut aussi forcer un niveau au moment de lancer la session. Pour la première version du jeu, cinq niveaux sont définis, du plus facile au plus difficile.
+Le jeu propose plusieurs niveaux de difficulté. Pour la première version du jeu, cinq niveaux sont définis, du plus facile au plus difficile. Le niveau joué est choisi par le praticien dans le logiciel PC au moment de générer le QR `creation_patient` et appliqué tel quel par la tablette, comme détaillé plus bas dans la section « Choix du niveau de difficulté ».
 
 Le niveau 1 est introductif. La planche contient peu de visages au total et deux émotions seulement, joie et tristesse, qui sont les plus simples à distinguer. Les visages cibles sont nombreux par rapport au nombre total, ce qui rend la tâche facile sans pression.
 
@@ -71,7 +71,7 @@ La composition d'une planche à l'écran utilise une grille pseudo-aléatoire : 
 
 Le jeu enregistre des métriques détaillées à plusieurs niveaux pendant chaque session. Ces métriques sont stockées localement dans la base SQLite de la tablette et seront transférées au logiciel praticien par QR code à la fin de la session.
 
-Au niveau de la session globale on enregistre l'identifiant aléatoire du patient et ses initiales, la date et l'heure de début, le niveau de difficulté joué, le nombre de manches jouées, et l'heure de fin. Le score global de la session est calculé comme un agrégat des scores de manches.
+Au niveau de la session globale on enregistre le `patient_id` et les `patient_initiales` reçus du PC dans le message `creation_patient` scanné en début de séance, la date et l'heure de début, le niveau de difficulté joué, le nombre de manches jouées, et l'heure de fin. Le score global de la session est calculé comme un agrégat des scores de manches.
 
 Au niveau de chaque manche on enregistre l'émotion cible demandée, le nombre total de visages dans la planche, le nombre de cibles présentes, le nombre de cibles correctement trouvées, le nombre de faux positifs (cliqués mais non cibles), le nombre de cibles ratées (cibles non cliquées à la fin), le temps total de la manche, et un booléen indiquant si la manche a été interrompue par un abandon plutôt que terminée normalement.
 
@@ -81,25 +81,25 @@ Les métriques de "patience" et "frustration" mentionnées dans les notes initia
 
 ## Format du payload session
 
-À la fin de la session, la tablette construit un payload conforme à la spécification du protocole QR documentée dans `docs/specs/protocole_qr.md`. Le type du message est `session`, la version est 1, et la structure du payload est la suivante.
+À la fin de la session, la tablette construit un payload conforme à la spécification du protocole QR documentée dans `docs/specs/protocole_qr.md`. Le type du message est `session`, la version est 2, et la structure du payload est la suivante.
 
-Le payload contient les initiales du patient, son identifiant aléatoire, la date de la session, le type de jeu qui vaut `emotions` pour ce jeu, le niveau joué, et un tableau de manches. Chaque manche contient son émotion cible, ses métriques agrégées, et son tableau de taps. Chaque tap contient son timestamp relatif, ses coordonnées, l'émotion du visage tapé, et le booléen de réussite.
+Le payload contient le `patient_id` et les `patient_initiales` repris tels quels du message `creation_patient` reçu en début de séance, la `session_date` au format ISO 8601 UTC qui marque le début effectif de la séance, le `jeu_type` qui vaut `emotions` pour ce jeu, le `niveau` joué, et un tableau `manches`. Chaque manche contient son `emotion_cible`, ses métriques agrégées, et son tableau `taps`. Chaque tap contient son timestamp relatif, ses coordonnées, l'émotion du visage tapé, et le booléen de réussite.
 
 L'enveloppe complète est signée par la tablette avec sa clé privée ed25519, et le PC vérifie la signature à réception comme prévu dans la spec QR.
 
-## Adaptation automatique de difficulté
+## Choix du niveau de difficulté
 
-À partir de plusieurs sessions, le moteur d'adaptation ajuste le niveau du patient. La règle de base est la suivante. Si le taux de réussite global de la session est supérieur à 80% et que le temps moyen par cible est en baisse par rapport aux sessions précédentes, le niveau monte d'un cran à la session suivante. Si le taux de réussite est inférieur à 50% ou si le patient a abandonné plusieurs manches, le niveau descend d'un cran. Sinon le niveau reste stable.
+Le niveau de difficulté de chaque session est choisi explicitement par le praticien dans le logiciel PC au moment de générer le QR `creation_patient`. Ce choix s'appuie sur le jugement clinique du praticien à partir de ce qu'il a observé lors des séances précédentes du patient, des objectifs thérapeutiques de la séance courante, et de l'état du patient le jour donné. La valeur saisie est transmise dans le champ `niveau_demande` du message `creation_patient` conformément à la spec QR version 2.
 
-Pour éviter les oscillations, une hystérésis est appliquée : le patient doit confirmer deux sessions consécutives au-dessus ou en dessous du seuil pour que le niveau change. Cette logique est implémentée dans le module `adaptation` côté tablette.
+La tablette applique strictement le niveau reçu sans le modifier ni le contester. Elle ne maintient pas d'historique des sessions précédentes du patient et n'effectue aucun calcul d'adaptation. Cette répartition est cohérente avec l'ADR-07 qui confie au PC la responsabilité de l'identification patient et, par extension, les choix qui dépendent de l'historique nominatif.
 
-Le praticien peut toujours forcer un niveau spécifique au lancement de la session, ce qui désactive temporairement l'adaptation automatique pour cette session uniquement.
+Une évolution post-soutenance est envisagée pour introduire un calcul de niveau recommandé côté PC, basé sur l'historique des sessions reçues précédemment du même patient. Cette recommandation serait transmise via un champ `niveau_recommande` complémentaire ou en remplacement de `niveau_demande` dans le message `creation_patient`. La décision serait alors tracée par un nouvel ADR et le protocole QR évoluerait en version 3. À ce stade du projet et pour le périmètre fin juin, le choix manuel est suffisant et défendable par l'argument que le jugement clinique du praticien prime sur l'algorithme.
 
 ## Écrans et navigation
 
-Le jeu s'intègre dans l'application tablette existante. Il est accessible depuis la route `/jeu` actuellement occupée par un placeholder. La navigation depuis l'écran d'accueil reste la même : si un appairage avec le PC existe en base, le bouton "Nouveau patient" amène vers le sélecteur de patient, puis vers la sélection de jeu (qui ne propose qu'un jeu pour l'instant), puis vers l'écran de jeu lui-même.
+Le jeu s'intègre dans l'application tablette existante. Il est accessible depuis la route `/jeu` actuellement occupée par un placeholder. La navigation depuis l'écran d'accueil est revue conformément à l'ADR-07 et à la spec QR version 2 : si un appairage avec le PC existe en base, le bouton "Nouveau patient" ouvre directement le scanner de caméra arrière pour lire un QR `creation_patient` généré par le logiciel PC. Après scan et vérification de signature avec `pc_pub`, la tablette affiche un écran de confirmation du type "Patient MD chargé. Prêt à jouer.", le praticien valide, et la tablette enchaîne sur la sélection de jeu (qui ne propose qu'un jeu pour l'instant), puis sur l'écran de jeu lui-même.
 
-L'écran de sélection de patient permet au praticien de saisir les initiales du patient et soit de récupérer un identifiant aléatoire déjà existant si le patient est connu sur la tablette, soit de générer un nouvel identifiant si c'est un nouveau patient. Cet écran s'appelle `SelecteurPatientScreen` et est implémenté dans `lib/features/profil_patient/`.
+Aucun écran de sélection ou de création de patient n'est implémenté côté tablette. La feature `profil_patient` initialement envisagée n'existera pas. Le scan du QR `creation_patient` réutilise la cinématique de scan déjà en place pour l'appairage et s'appuie sur les mêmes modules `qr` et `crypto`.
 
 L'écran de jeu lui-même est implémenté dans `lib/features/jeu_emotions/` selon l'arborescence prescrite par le `CLAUDE.md` du sous-projet tablette : `domain.dart` pour les types métier, `data.dart` pour l'accès aux assets et au stockage, `controller.dart` pour les providers Riverpod qui orchestrent la boucle de jeu, et `ui/` pour les widgets.
 
@@ -121,11 +121,11 @@ L'orientation paysage est forcée comme pour le reste de l'application.
 
 ## Tests prévus
 
-Les tests unitaires couvrent la logique de composition de planche (tirage aléatoire avec bon nombre de cibles et bonne répartition), la logique de scoring (calcul correct du taux de réussite et détection des abandons), et la logique d'adaptation de difficulté (transitions de niveau correctes selon les conditions, hystérésis respectée).
+Les tests unitaires couvrent la logique de composition de planche (tirage aléatoire avec bon nombre de cibles et bonne répartition) et la logique de scoring (calcul correct du taux de réussite et détection des abandons).
 
 Les tests de widget couvrent l'affichage de l'écran de jeu, la réaction aux taps simulés sur des visages cibles et non cibles, et l'enchaînement des manches.
 
-Les tests d'intégration couvrent le flux complet d'une session : création de patient, jeu de plusieurs manches, génération du QR de session, vérification que le payload produit est conforme à la spec.
+Les tests d'intégration couvrent le flux complet d'une session : scan d'un QR `creation_patient` simulé via une image PNG fixture et vérification de signature, jeu de plusieurs manches, génération du QR de session, vérification que le payload produit est conforme à la spec QR version 2.
 
 Le test manuel sur Lenovo Tab P12 couvre tout ce que les tests automatisés ne peuvent pas valider : l'ergonomie tactile réelle, la fluidité d'affichage des planches denses, la lisibilité des visages à taille réelle, la qualité des retours haptiques et sonores, et l'expérience utilisateur globale.
 
