@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"projet_annuel/logiciel_pc_go/internal/crypto"
+	"projet_annuel/logiciel_pc_go/internal/patients"
 )
 
 const titreFenetrePrincipale = "Suivi patients"
@@ -23,6 +24,16 @@ func main() {
 		clePriveePC:   clePrivee,
 		clePubliquePC: clePublique,
 	}
+
+	chemin, err := cheminBasePatients()
+	if err != nil {
+		log.Fatalf("chemin base patients: %v", err)
+	}
+	depot, err := patients.OuvrirDepot(chemin)
+	if err != nil {
+		log.Fatalf("ouvrir base patients: %v", err)
+	}
+	defer depot.Fermer()
 
 	logiciel := app.New()
 	fenetre := logiciel.NewWindow(titreFenetrePrincipale)
@@ -45,14 +56,23 @@ func main() {
 		}()
 	})
 
-	contenu := container.NewVBox(
-		widget.NewLabel("Logiciel praticien"),
-		boutonGenerer,
-		boutonScanner,
+	entete := widget.NewLabelWithStyle(
+		titreFenetrePrincipale,
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+
+	panneauPatients := construirePanneauPatients(fenetre, depot)
+
+	piedDePage := container.NewVBox(
 		widget.NewSeparator(),
+		widget.NewLabelWithStyle("Appairage du dispositif", fyne.TextAlignLeading, fyne.TextStyle{Italic: true}),
+		container.NewHBox(boutonGenerer, boutonScanner),
 		statut,
 	)
+
+	contenu := container.NewBorder(entete, piedDePage, nil, nil, panneauPatients)
 	fenetre.SetContent(contenu)
-	fenetre.Resize(fyne.NewSize(520, 320))
+	fenetre.Resize(fyne.NewSize(800, 600))
 	fenetre.ShowAndRun()
 }
