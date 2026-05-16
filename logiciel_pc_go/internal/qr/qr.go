@@ -15,8 +15,9 @@ import (
 const (
 	TypeAppairagePC       = "appairage_pc"
 	TypeAppairageTablette = "appairage_tablette"
+	TypeCreationPatient   = "creation_patient"
 	TypeSession           = "session"
-	VersionProtocole      = 1
+	VersionProtocole      = 2
 	tailleQRPixels        = 512
 )
 

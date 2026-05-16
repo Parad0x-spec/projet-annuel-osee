@@ -101,7 +101,7 @@ func TestSerialiserPourSignature_FormatCompactStable(t *testing.T) {
 		Payload:   json.RawMessage(`{"pairing_id":"abc","tab_pub":"ZGVm"}`),
 		Signature: "doit-etre-ignoree",
 	}
-	attendu := `{"type":"appairage_tablette","version":1,"timestamp":"2026-05-11T10:00:00.000000Z","payload":{"pairing_id":"abc","tab_pub":"ZGVm"}}`
+	attendu := `{"type":"appairage_tablette","version":2,"timestamp":"2026-05-11T10:00:00.000000Z","payload":{"pairing_id":"abc","tab_pub":"ZGVm"}}`
 
 	obtenu, err := SerialiserPourSignature(enveloppe)
 	if err != nil {
