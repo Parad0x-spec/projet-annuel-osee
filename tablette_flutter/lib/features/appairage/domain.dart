@@ -1,7 +1,7 @@
 const String typeAppairagePc = 'appairage_pc';
 const String typeAppairageTablette = 'appairage_tablette';
 const String typeSession = 'session';
-const int versionProtocole = 1;
+const int versionProtocole = 2;
 
 sealed class EtatAppairage {
   const EtatAppairage();
