@@ -3,14 +3,15 @@ module projet_annuel/logiciel_pc_go
 go 1.26.2
 
 require (
+	fyne.io/fyne/v2 v2.7.3
 	github.com/google/uuid v1.6.0
 	github.com/makiuchi-d/gozxing v0.1.1
 	github.com/pion/mediadevices v0.10.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
+	modernc.org/sqlite v1.50.0
 )
 
 require (
-	fyne.io/fyne/v2 v2.7.3 // indirect
 	fyne.io/systray v1.12.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/blackjack/webcam v0.6.1 // indirect
@@ -69,5 +70,4 @@ require (
 	modernc.org/libc v1.72.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.50.0 // indirect
 )
