@@ -10,6 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	qrcode "github.com/skip2/go-qrcode"
+
+	"projet_annuel/logiciel_pc_go/internal/crypto"
 )
 
 const (
@@ -32,6 +34,12 @@ type Enveloppe struct {
 type PayloadAppairagePC struct {
 	PairingId string `json:"pairing_id"`
 	PcPub     string `json:"pc_pub"`
+}
+
+type PayloadCreationPatient struct {
+	PatientID        string `json:"patient_id"`
+	PatientInitiales string `json:"patient_initiales"`
+	NiveauDemande    int    `json:"niveau_demande"`
 }
 
 func SerialiserCanonique(enveloppe Enveloppe) ([]byte, error) {
@@ -88,6 +96,63 @@ func GenererQRAppairage(clePubliquePC []byte) ([]byte, []byte, string, error) {
 	}
 
 	return enveloppeJSON, pngQR, pairingId, nil
+}
+
+func GenererQRCreationPatient(clePriveePC []byte, patientID string, patientInitiales string, niveauDemande int) ([]byte, []byte, error) {
+	if niveauDemande < 1 || niveauDemande > 5 {
+		return nil, nil, fmt.Errorf("%w: %d", ErrNiveauHorsPlage, niveauDemande)
+	}
+	if patientID == "" {
+		return nil, nil, fmt.Errorf("%w: vide", ErrPatientIDInvalide)
+	}
+	if patientInitiales == "" {
+		return nil, nil, fmt.Errorf("%w: vide", ErrInitialesInvalides)
+	}
+
+	payload := PayloadCreationPatient{
+		PatientID:        patientID,
+		PatientInitiales: patientInitiales,
+		NiveauDemande:    niveauDemande,
+	}
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return nil, nil, fmt.Errorf("qr: serialiser payload creation_patient: %w", err)
+	}
+
+	enveloppe := Enveloppe{
+		Type:      TypeCreationPatient,
+		Version:   VersionProtocole,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Payload:   payloadJSON,
+		Signature: "",
+	}
+
+	messageSigne, err := SerialiserPourSignature(enveloppe)
+	if err != nil {
+		return nil, nil, err
+	}
+	signature, err := crypto.Signer(clePriveePC, messageSigne)
+	if err != nil {
+		return nil, nil, fmt.Errorf("qr: signer creation_patient: %w", err)
+	}
+	enveloppe.Signature = base64.StdEncoding.EncodeToString(signature)
+
+	enveloppeJSON, err := SerialiserCanonique(enveloppe)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chargeUtileQR, err := compresserEtEncoder(enveloppeJSON)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pngQR, err := qrcode.Encode(chargeUtileQR, qrcode.Medium, tailleQRPixels)
+	if err != nil {
+		return nil, nil, fmt.Errorf("qr: encoder png: %w", err)
+	}
+
+	return enveloppeJSON, pngQR, nil
 }
 
 func compresserEtEncoder(donnees []byte) (string, error) {

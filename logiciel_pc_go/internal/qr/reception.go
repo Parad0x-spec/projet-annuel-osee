@@ -20,6 +20,9 @@ var (
 	ErrPayloadInvalide      = errors.New("qr: payload invalide")
 	ErrSignatureInvalide    = errors.New("qr: signature invalide")
 	ErrPairingIdNonReconnu  = errors.New("qr: pairing_id non reconnu")
+	ErrNiveauHorsPlage      = errors.New("qr: niveau_demande hors plage 1-5")
+	ErrPatientIDInvalide    = errors.New("qr: patient_id invalide")
+	ErrInitialesInvalides   = errors.New("qr: patient_initiales invalides")
 )
 
 type PayloadAppairageTablette struct {
