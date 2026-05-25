@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -9,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"projet_annuel/logiciel_pc_go/internal/appairage_pc"
 	"projet_annuel/logiciel_pc_go/internal/crypto"
 	"projet_annuel/logiciel_pc_go/internal/patients"
 )
@@ -35,6 +37,16 @@ func main() {
 	}
 	defer depot.Fermer()
 
+	depotAppairage, err := appairage_pc.OuvrirDepot(chemin)
+	if err != nil {
+		log.Fatalf("ouvrir base appairage: %v", err)
+	}
+	defer depotAppairage.Fermer()
+
+	if appairage, err := depotAppairage.LireAppairageActuel(context.Background()); err == nil {
+		session.memoriserTabPub(appairage.TabPub)
+	}
+
 	logiciel := app.New()
 	fenetre := logiciel.NewWindow(titreFenetrePrincipale)
 
@@ -49,7 +61,7 @@ func main() {
 	boutonScanner := widget.NewButton("Scanner QR tablette", func() {
 		statut.SetText("Capture en cours...")
 		go func() {
-			message := scannerEtVerifier(session)
+			message := scannerEtVerifier(session, depotAppairage)
 			fyne.Do(func() {
 				statut.SetText(message)
 			})

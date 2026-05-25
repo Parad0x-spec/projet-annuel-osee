@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"projet_annuel/logiciel_pc_go/internal/appairage_pc"
 	"projet_annuel/logiciel_pc_go/internal/qr"
 )
 
@@ -49,12 +50,7 @@ func ouvrirFenetreQR(logiciel fyne.App, session *sessionAppairage) error {
 	return nil
 }
 
-func scannerEtVerifier(session *sessionAppairage) string {
-	pairingIdAttendu := session.lirePairingId()
-	if pairingIdAttendu == "" {
-		return "Generez d'abord un QR PC."
-	}
-
+func scannerEtVerifier(session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage) string {
 	ctx, annuler := context.WithTimeout(context.Background(), delaiCaptureMax)
 	defer annuler()
 
@@ -73,11 +69,26 @@ func scannerEtVerifier(session *sessionAppairage) string {
 		return messageErreurVerification(err)
 	}
 
-	if _, err := qr.VerifierAppairageTablette(enveloppe, pairingIdAttendu); err != nil {
+	if enveloppe.Type != qr.TypeAppairageTablette {
+		return "Type de QR inattendu."
+	}
+
+	pairingIdAttendu := session.lirePairingId()
+	if pairingIdAttendu == "" {
+		return "Generez d'abord un QR PC."
+	}
+
+	tabPub, err := qr.VerifierAppairageTablette(enveloppe, pairingIdAttendu)
+	if err != nil {
 		return messageErreurVerification(err)
 	}
 
-	return "Appairage confirme et signature verifiee."
+	if _, err := depotAppairage.EnregistrerAppairage(ctx, pairingIdAttendu, tabPub); err != nil {
+		return fmt.Sprintf("Appairage verifie mais non enregistre : %v", err)
+	}
+	session.memoriserTabPub(tabPub)
+
+	return "Appairage enregistre."
 }
 
 func messageErreurCapture(err error) string {
