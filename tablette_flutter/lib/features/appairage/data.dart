@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../../core/crypto.dart';
+import '../../core/qr_envelope.dart';
 import '../../core/stockage.dart';
 import 'domain.dart';
 
@@ -164,34 +165,20 @@ class GenerateurQRRetour {
     DateTime? horodatage,
   }) async {
     final timestamp = (horodatage ?? DateTime.now().toUtc()).toIso8601String();
-    final payload = <String, dynamic>{
-      'pairing_id': pairingId,
-      'tab_pub': base64.encode(tabPub),
-    };
-
-    final donneesASigner = <String, dynamic>{
-      'type': typeAppairageTablette,
-      'version': versionProtocole,
-      'timestamp': timestamp,
-      'payload': payload,
-    };
-    final octetsASigner = utf8.encode(jsonEncode(donneesASigner));
-    final signature = await Crypto.signer(tabPriv, octetsASigner);
-
-    final enveloppe = <String, dynamic>{
-      'type': typeAppairageTablette,
-      'version': versionProtocole,
-      'timestamp': timestamp,
-      'payload': payload,
-      'signature': base64.encode(signature),
-    };
-    final enveloppeJSON = jsonEncode(enveloppe);
-    final octetsCompresses = ZLibCodec().encode(utf8.encode(enveloppeJSON));
-    final chargeUtileBase64 = base64.encode(octetsCompresses);
+    final enveloppe = await ConstructeurEnveloppe.construireEtSigner(
+      type: typeAppairageTablette,
+      version: versionProtocole,
+      timestamp: timestamp,
+      payload: <String, dynamic>{
+        'pairing_id': pairingId,
+        'tab_pub': base64.encode(tabPub),
+      },
+      clePrivee: tabPriv,
+    );
 
     return QRRetour(
-      chargeUtileBase64: chargeUtileBase64,
-      enveloppeJSON: enveloppeJSON,
+      chargeUtileBase64: enveloppe.chargeUtileBase64,
+      enveloppeJSON: enveloppe.enveloppeJSON,
     );
   }
 
@@ -201,11 +188,11 @@ class GenerateurQRRetour {
     required String timestamp,
     required Map<String, dynamic> payload,
   }) {
-    return jsonEncode(<String, dynamic>{
-      'type': type,
-      'version': version,
-      'timestamp': timestamp,
-      'payload': payload,
-    });
+    return ConstructeurEnveloppe.serialiserPourSignature(
+      type: type,
+      version: version,
+      timestamp: timestamp,
+      payload: payload,
+    );
   }
 }

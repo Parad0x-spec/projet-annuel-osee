@@ -25,9 +25,9 @@ class JeuPlaceholderScreen extends StatelessWidget {
                 width: 360,
                 height: 96,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/'),
+                  onPressed: () => context.go('/export-session'),
                   child: const Text(
-                    Textes.boutonRetourAccueil,
+                    Textes.boutonExporterSessionTest,
                     style: TextStyle(fontSize: 22),
                   ),
                 ),

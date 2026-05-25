@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/qr_envelope.dart';
 import '../../core/textes.dart';
 import '../../shared_widgets/page_scanner_qr.dart';
 import '../appairage/controller.dart';
@@ -109,3 +110,61 @@ class ControleurReceptionQr extends Notifier<void> {
 
 final controleurReceptionQrProvider =
     NotifierProvider<ControleurReceptionQr, void>(ControleurReceptionQr.new);
+
+class AucunPatientChargeException implements Exception {
+  const AucunPatientChargeException();
+
+  @override
+  String toString() => 'AucunPatientChargeException';
+}
+
+class AppairageIntrouvableException implements Exception {
+  const AppairageIntrouvableException();
+
+  @override
+  String toString() => 'AppairageIntrouvableException';
+}
+
+Future<EnveloppeQr> construireExportSession({
+  required EtatSession etat,
+  required Appairage? appairage,
+  DateTime? horodatage,
+}) {
+  if (etat is! PatientCharge) {
+    throw const AucunPatientChargeException();
+  }
+  if (appairage == null) {
+    throw const AppairageIntrouvableException();
+  }
+
+  final patient = etat.session.patient;
+  final maintenant = horodatage ?? DateTime.now().toUtc();
+  final session = Session(
+    patientId: patient.patientId,
+    patientInitiales: patient.patientInitiales,
+    sessionDate: maintenant,
+    jeuType: jeuTypeEmotions,
+    niveau: patient.niveauDemande,
+    manches: const <Manche>[],
+  );
+
+  return construireQrSession(
+    session: session,
+    tabPriv: appairage.tabPriv,
+    horodatage: maintenant,
+  );
+}
+
+Future<EnveloppeQr> exporterSession(Ref ref, {DateTime? horodatage}) async {
+  final appairage = await ref.read(appairageActuelProvider.future);
+  final etat = ref.read(sessionEnCoursProvider);
+  return construireExportSession(
+    etat: etat,
+    appairage: appairage,
+    horodatage: horodatage,
+  );
+}
+
+final exportSessionProvider = FutureProvider.autoDispose<EnveloppeQr>((ref) {
+  return exporterSession(ref);
+});

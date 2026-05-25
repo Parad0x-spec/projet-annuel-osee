@@ -24,7 +24,19 @@ class Textes {
 
   static const String titreJeuPlaceholder = 'Jeu';
   static const String messageJeuPlaceholder =
-      'Le jeu sera implémenté au sprint 3.';
+      'Mode test infrastructure : permet de valider la boucle PC ↔ tablette '
+      'avant l\'implémentation du jeu.';
+  static const String boutonExporterSessionTest = 'Exporter session de test';
+
+  static const String titreExportSession = 'Export de la séance';
+  static const String consigneExportSession =
+      'Faites scanner ce QR au praticien.';
+  static String sessionPourInitiales(String initiales) =>
+      'Session pour $initiales';
+  static const String boutonTermineRetourAccueil =
+      'Terminé, retourner à l\'accueil';
+  static const String erreurExportSession =
+      'Export impossible. Vérifiez que la tablette est appairée.';
 
   static const String titreConfirmationPatient = 'Patient chargé';
   static String confirmationPatientPret(String initiales) =>
