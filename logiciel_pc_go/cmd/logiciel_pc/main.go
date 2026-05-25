@@ -13,6 +13,7 @@ import (
 	"projet_annuel/logiciel_pc_go/internal/appairage_pc"
 	"projet_annuel/logiciel_pc_go/internal/crypto"
 	"projet_annuel/logiciel_pc_go/internal/patients"
+	"projet_annuel/logiciel_pc_go/internal/sessions"
 )
 
 const titreFenetrePrincipale = "Suivi patients"
@@ -47,6 +48,12 @@ func main() {
 		session.memoriserTabPub(appairage.TabPub)
 	}
 
+	depotSessions, err := sessions.OuvrirDepot(chemin)
+	if err != nil {
+		log.Fatalf("ouvrir base sessions: %v", err)
+	}
+	defer depotSessions.Fermer()
+
 	logiciel := app.New()
 	fenetre := logiciel.NewWindow(titreFenetrePrincipale)
 
@@ -61,7 +68,7 @@ func main() {
 	boutonScanner := widget.NewButton("Scanner QR tablette", func() {
 		statut.SetText("Capture en cours...")
 		go func() {
-			message := scannerEtVerifier(session, depotAppairage)
+			message := scannerEtVerifier(session, depotAppairage, depotSessions)
 			fyne.Do(func() {
 				statut.SetText(message)
 			})

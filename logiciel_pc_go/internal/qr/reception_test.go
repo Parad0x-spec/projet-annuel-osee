@@ -37,6 +37,97 @@ func construireChargeUtileAppairageTablette(t *testing.T, pairingId string, tabP
 	return chargeUtile
 }
 
+func construireChargeUtileSession(t *testing.T, patientID, initiales, sessionDate, jeuType string, niveau int, tabPriv []byte, timestamp string) string {
+	t.Helper()
+	payloadJSON := fmt.Sprintf(
+		`{"patient_id":%q,"patient_initiales":%q,"session_date":%q,"jeu_type":%q,"niveau":%d,"manches":[]}`,
+		patientID, initiales, sessionDate, jeuType, niveau)
+	messageSigne := fmt.Sprintf(`{"type":%q,"version":%d,"timestamp":%q,"payload":%s}`,
+		TypeSession, VersionProtocole, timestamp, payloadJSON)
+	signature := ed25519.Sign(ed25519.PrivateKey(tabPriv), []byte(messageSigne))
+	enveloppeJSON := fmt.Sprintf(`{"type":%q,"version":%d,"timestamp":%q,"payload":%s,"signature":%q}`,
+		TypeSession, VersionProtocole, timestamp, payloadJSON, base64.StdEncoding.EncodeToString(signature))
+	chargeUtile, err := compresserEtEncoder([]byte(enveloppeJSON))
+	if err != nil {
+		t.Fatalf("compresser charge utile: %v", err)
+	}
+	return chargeUtile
+}
+
+func TestVerifierSession_Succes(t *testing.T) {
+	tabPriv, tabPub := genererPaireEd25519DeTest(t)
+	chargeUtile := construireChargeUtileSession(t, "id-123", "MD", "2026-05-25T10:00:00.000Z", "emotions", 3, tabPriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+
+	payload, err := VerifierSession(enveloppe, tabPub)
+	if err != nil {
+		t.Fatalf("VerifierSession: %v", err)
+	}
+	if payload.PatientID != "id-123" || payload.PatientInitiales != "MD" {
+		t.Errorf("payload = %+v", payload)
+	}
+	if payload.JeuType != "emotions" || payload.Niveau != 3 {
+		t.Errorf("jeu_type/niveau = %q/%d", payload.JeuType, payload.Niveau)
+	}
+	if string(payload.Manches) != "[]" {
+		t.Errorf("manches = %s, attendu []", payload.Manches)
+	}
+}
+
+func TestVerifierSession_SignatureMauvaiseCle(t *testing.T) {
+	_, tabPub := genererPaireEd25519DeTest(t)
+	autrePriv, _ := genererPaireEd25519DeTest(t)
+	chargeUtile := construireChargeUtileSession(t, "id-123", "MD", "2026-05-25T10:00:00.000Z", "emotions", 3, autrePriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+	if _, err := VerifierSession(enveloppe, tabPub); !errors.Is(err, ErrSignatureInvalide) {
+		t.Errorf("erreur = %v, attendu ErrSignatureInvalide", err)
+	}
+}
+
+func TestVerifierSession_TypeInattendu(t *testing.T) {
+	tabPriv, tabPub := genererPaireEd25519DeTest(t)
+	chargeUtile := construireChargeUtileSession(t, "id-123", "MD", "2026-05-25T10:00:00.000Z", "emotions", 3, tabPriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+	enveloppe.Type = TypeAppairageTablette
+	if _, err := VerifierSession(enveloppe, tabPub); !errors.Is(err, ErrTypeInattendu) {
+		t.Errorf("erreur = %v, attendu ErrTypeInattendu", err)
+	}
+}
+
+func TestVerifierSession_VersionIncompatible(t *testing.T) {
+	tabPriv, tabPub := genererPaireEd25519DeTest(t)
+	chargeUtile := construireChargeUtileSession(t, "id-123", "MD", "2026-05-25T10:00:00.000Z", "emotions", 3, tabPriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+	enveloppe.Version = 1
+	if _, err := VerifierSession(enveloppe, tabPub); !errors.Is(err, ErrVersionIncompatible) {
+		t.Errorf("erreur = %v, attendu ErrVersionIncompatible", err)
+	}
+}
+
+func TestVerifierSession_PayloadSansPatientID(t *testing.T) {
+	tabPriv, tabPub := genererPaireEd25519DeTest(t)
+	chargeUtile := construireChargeUtileSession(t, "", "MD", "2026-05-25T10:00:00.000Z", "emotions", 3, tabPriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+	if _, err := VerifierSession(enveloppe, tabPub); !errors.Is(err, ErrPayloadInvalide) {
+		t.Errorf("erreur = %v, attendu ErrPayloadInvalide", err)
+	}
+}
+
 func TestLireChargeUtileQR_RoundTrip(t *testing.T) {
 	tabPriv, tabPub := genererPaireEd25519DeTest(t)
 	pairingId := uuid.NewString()

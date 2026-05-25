@@ -30,6 +30,15 @@ type PayloadAppairageTablette struct {
 	TabPub    string `json:"tab_pub"`
 }
 
+type PayloadSession struct {
+	PatientID        string          `json:"patient_id"`
+	PatientInitiales string          `json:"patient_initiales"`
+	SessionDate      string          `json:"session_date"`
+	JeuType          string          `json:"jeu_type"`
+	Niveau           int             `json:"niveau"`
+	Manches          json.RawMessage `json:"manches"`
+}
+
 func LireChargeUtileQR(chargeUtileBase64 string) (Enveloppe, error) {
 	donnees, err := decoderEtDecompresser(chargeUtileBase64)
 	if err != nil {
@@ -113,4 +122,32 @@ func VerifierAppairageTablette(enveloppe Enveloppe, pairingIdAttendu string) ([]
 		return nil, fmt.Errorf("%w: attendu %q, recu %q", ErrPairingIdNonReconnu, pairingIdAttendu, payload.PairingId)
 	}
 	return clePubliqueTablette, nil
+}
+
+func VerifierSession(enveloppe Enveloppe, tabPub []byte) (PayloadSession, error) {
+	if enveloppe.Type != TypeSession {
+		return PayloadSession{}, fmt.Errorf("%w: %q", ErrTypeInattendu, enveloppe.Type)
+	}
+	if enveloppe.Version != VersionProtocole {
+		return PayloadSession{}, fmt.Errorf("%w: %d", ErrVersionIncompatible, enveloppe.Version)
+	}
+	var payload PayloadSession
+	if err := json.Unmarshal(enveloppe.Payload, &payload); err != nil {
+		return PayloadSession{}, fmt.Errorf("%w: %v", ErrPayloadInvalide, err)
+	}
+	if payload.PatientID == "" || payload.JeuType == "" {
+		return PayloadSession{}, fmt.Errorf("%w: champs obligatoires manquants", ErrPayloadInvalide)
+	}
+	signature, err := base64.StdEncoding.DecodeString(enveloppe.Signature)
+	if err != nil {
+		return PayloadSession{}, fmt.Errorf("%w: decodage: %v", ErrSignatureInvalide, err)
+	}
+	messageSigne, err := SerialiserPourSignature(enveloppe)
+	if err != nil {
+		return PayloadSession{}, err
+	}
+	if !crypto.Verifier(tabPub, messageSigne, signature) {
+		return PayloadSession{}, ErrSignatureInvalide
+	}
+	return payload, nil
 }

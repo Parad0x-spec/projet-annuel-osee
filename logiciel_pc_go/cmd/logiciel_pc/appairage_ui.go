@@ -15,6 +15,7 @@ import (
 
 	"projet_annuel/logiciel_pc_go/internal/appairage_pc"
 	"projet_annuel/logiciel_pc_go/internal/qr"
+	"projet_annuel/logiciel_pc_go/internal/sessions"
 )
 
 const (
@@ -50,7 +51,7 @@ func ouvrirFenetreQR(logiciel fyne.App, session *sessionAppairage) error {
 	return nil
 }
 
-func scannerEtVerifier(session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage) string {
+func scannerEtVerifier(session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage, depotSessions *sessions.DepotSessions) string {
 	ctx, annuler := context.WithTimeout(context.Background(), delaiCaptureMax)
 	defer annuler()
 
@@ -69,10 +70,17 @@ func scannerEtVerifier(session *sessionAppairage, depotAppairage *appairage_pc.D
 		return messageErreurVerification(err)
 	}
 
-	if enveloppe.Type != qr.TypeAppairageTablette {
+	switch enveloppe.Type {
+	case qr.TypeAppairageTablette:
+		return traiterAppairageTablette(ctx, session, depotAppairage, enveloppe)
+	case qr.TypeSession:
+		return traiterSession(ctx, session, depotAppairage, depotSessions, enveloppe)
+	default:
 		return "Type de QR inattendu."
 	}
+}
 
+func traiterAppairageTablette(ctx context.Context, session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage, enveloppe qr.Enveloppe) string {
 	pairingIdAttendu := session.lirePairingId()
 	if pairingIdAttendu == "" {
 		return "Generez d'abord un QR PC."
@@ -89,6 +97,37 @@ func scannerEtVerifier(session *sessionAppairage, depotAppairage *appairage_pc.D
 	session.memoriserTabPub(tabPub)
 
 	return "Appairage enregistre."
+}
+
+func traiterSession(ctx context.Context, session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage, depotSessions *sessions.DepotSessions, enveloppe qr.Enveloppe) string {
+	tabPub := session.lireTabPub()
+	if len(tabPub) == 0 {
+		appairage, err := depotAppairage.LireAppairageActuel(ctx)
+		if err != nil {
+			return "Aucun appairage enregistre. Appairez d'abord la tablette."
+		}
+		tabPub = appairage.TabPub
+		session.memoriserTabPub(tabPub)
+	}
+
+	payload, err := qr.VerifierSession(enveloppe, tabPub)
+	if err != nil {
+		return messageErreurVerification(err)
+	}
+
+	sessionDate, err := time.Parse(time.RFC3339, payload.SessionDate)
+	if err != nil {
+		return "QR illisible. Date de session invalide."
+	}
+
+	if _, err := depotSessions.EnregistrerSession(ctx, payload.PatientID, sessionDate, payload.JeuType, payload.Niveau, enveloppe.Payload); err != nil {
+		if errors.Is(err, sessions.ErrPatientInconnu) {
+			return fmt.Sprintf("Patient inconnu (%s). Session non enregistree.", payload.PatientInitiales)
+		}
+		return fmt.Sprintf("Session non enregistree : %v", err)
+	}
+
+	return fmt.Sprintf("Session recue pour patient %s - niveau %d", payload.PatientInitiales, payload.Niveau)
 }
 
 func messageErreurCapture(err error) string {
