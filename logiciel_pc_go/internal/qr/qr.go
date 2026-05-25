@@ -61,8 +61,10 @@ func DeserialiserEnveloppe(donnees []byte) (Enveloppe, error) {
 }
 
 func GenererQRAppairage(clePubliquePC []byte) ([]byte, []byte, string, error) {
-	pairingId := uuid.NewString()
+	return GenererQRAppairageAvecPairingId(clePubliquePC, uuid.NewString())
+}
 
+func GenererQRAppairageAvecPairingId(clePubliquePC []byte, pairingId string) ([]byte, []byte, string, error) {
 	payload := PayloadAppairagePC{
 		PairingId: pairingId,
 		PcPub:     base64.StdEncoding.EncodeToString(clePubliquePC),

@@ -8,16 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"projet_annuel/logiciel_pc_go/internal/crypto"
 	"projet_annuel/logiciel_pc_go/internal/qr"
 )
 
 func TestDecoderImageQR_RoundTripDepuisGenererQRAppairage(t *testing.T) {
-	_, clePubliquePC, err := crypto.GenererPaireDeCles()
-	if err != nil {
-		t.Fatalf("generation cles: %v", err)
-	}
-	_, pngQR, pairingIdAttendu, err := qr.GenererQRAppairage(clePubliquePC)
+	clePubliquePC := bytes.Repeat([]byte{0x42}, 32)
+	const pairingIdFixe = "11111111-2222-4333-8444-555555555555"
+	_, pngQR, pairingIdAttendu, err := qr.GenererQRAppairageAvecPairingId(clePubliquePC, pairingIdFixe)
 	if err != nil {
 		t.Fatalf("generation QR: %v", err)
 	}
