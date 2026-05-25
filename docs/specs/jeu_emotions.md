@@ -1,138 +1,136 @@
-# Spécification du jeu des émotions
+# Specification du jeu des emotions
+
+## Note de version
+
+Cette specification supersede la version anterieure. Elle est entierement refondue suite a la decision actee par l'ADR-08 de passer d'un modele de grille composee a la volee a un modele de planches scenes pre-dessinees style "Ou est Charlie".
 
 ## Objet
 
-Ce jeu est le premier contenu cognitif du projet. Il est destiné à être joué sur la tablette par des patients suivis pour TDAH ou troubles du spectre autistique. Le format retenu est inspiré du livre "Où est Charlie" : le patient voit à l'écran une planche dense remplie de petits visages exprimant chacun une émotion différente, et la consigne lui demande de trouver et de taper sur tous les visages exprimant une émotion donnée.
+Le jeu des emotions est le premier contenu cognitif du projet, integre dans l'application tablette. Il est destine a des patients suivis pour TDAH ou troubles du spectre autistique, encadres par un praticien qui pilote le dispositif depuis son PC.
 
-Ce format combine deux fonctions cognitives travaillées simultanément. La première est l'attention visuelle sélective, qui consiste à parcourir un champ visuel chargé et à isoler les éléments pertinents. La seconde est la reconnaissance des émotions sur les visages, qui est une compétence sociale de base souvent altérée dans le spectre autistique et qui peut être travaillée par exposition répétée.
+Le format retenu est inspire des livres "Ou est Charlie" : le patient voit a l'ecran une planche dense illustrant une scene sociale (un parc, une fete, une recreation) dans laquelle de nombreux enfants sont representes avec chacun une emotion definie. La consigne lui demande de trouver et taper sur tous les enfants exprimant une emotion donnee.
 
-## Mécanique générale du jeu
+Ce format combine deux objectifs cliniques. L'attention visuelle selective, qui consiste a parcourir un champ visuel charge et a isoler les elements pertinents, est une fonction frequemment alteree dans le TDAH. La reconnaissance des emotions sur des visages dans un contexte social riche est une competence souvent alteree dans le spectre autistique. En combinant les deux, le jeu travaille simultanement les deux dimensions dans un cadre proche de la vie reelle.
 
-Une session de jeu se compose de plusieurs manches. Chaque manche est indépendante. Au début d'une manche, la tablette affiche une consigne en haut de l'écran du type "Trouve tous les visages joyeux". En dessous se trouve une planche remplie de petits visages disposés en grille ou de manière pseudo-aléatoire. Le patient tape sur les visages qu'il pense correspondre à la consigne. À chaque tap, un retour visuel immédiat apparaît sur le visage tapé : un point vert qui persiste si le visage correspond à la consigne, un point rouge qui s'efface au bout d'une seconde si le visage ne correspond pas. La manche se termine quand le patient a trouvé tous les visages cibles ou quand il appuie sur le bouton "J'ai fini".
+## Banque de planches
 
-La consigne change à chaque manche pour entraîner le patient à reconnaître toutes les émotions du jeu. L'ordre des consignes est tiré aléatoirement parmi les émotions du niveau courant.
+La banque de planches est composee de trois planches scenes complete pour la premiere version, correspondant aux trois niveaux de difficulte. Chaque planche est une illustration cartoon dense montrant une scene sociale avec de nombreux enfants exprimant des emotions varies.
 
-```mermaid
-sequenceDiagram
-    participant P as Patient
-    participant T as Tablette
-    T->>P: Affiche consigne et planche
-    P->>T: Tape sur un visage
-    alt visage cible
-        T->>P: Point vert persistant + son discret
-    else visage non cible
-        T->>P: Point rouge temporaire + son discret
-    end
-    alt toutes cibles trouvées ou bouton fini
-        T->>P: Fin de manche, score affiché
-        T->>T: Manche suivante ou fin de session
-    end
+Les trois planches sont produites par generation d'images via ChatGPT en utilisant le modele Image-1. Le prompt utilise pour la planche niveau 1 est conserve dans docs/specs/planches_prompts.md et peut etre reutilise pour produire de nouvelles planches dans une evolution post-soutenance.
+
+Chaque planche est livree au format PNG, dimensions typiques 1536x1024 pixels, sans transparence, en couleurs vives. Les trois planches sont rangees dans tablette_flutter/assets/planches/ sous les noms planche_1.png, planche_2.png et planche_3.png.
+
+Chaque planche est associee a un fichier d'annotation JSON portant le meme nom et l'extension .json. Ce fichier contient la liste des personnages presents dans la planche avec, pour chacun, ses coordonnees x et y dans l'image (en pixels depuis le coin haut gauche), le rayon de la zone cliquable autour du visage (en pixels, typiquement entre vingt et quarante selon la taille du personnage dans la planche), et l'emotion qu'il exprime.
+
+Le format JSON de l'annotation est le suivant.
+
+```json
+{
+  "planche": "planche_1.png",
+  "largeur": 1536,
+  "hauteur": 1024,
+  "personnages": [
+    {"x": 245, "y": 380, "rayon": 30, "emotion": "joie"},
+    {"x": 412, "y": 156, "rayon": 28, "emotion": "tristesse"},
+    {"x": 678, "y": 245, "rayon": 32, "emotion": "colere"}
+  ]
+}
 ```
 
-La fin de session intervient au bout d'un nombre fixé de manches, typiquement cinq par session pour une première version. À la fin de la session, l'écran récapitule le score global et propose de quitter ou de rejouer.
+L'annotation est realisee par le developpeur du projet a l'aide de l'outil HTML d'annotation livre dans outils/annotateur_planche.html. L'outil affiche la planche, permet de cliquer sur chaque visage pour ajouter une annotation, et exporte le JSON pret a etre integre dans les assets de l'application.
 
-## Niveaux de difficulté
+## Niveaux de difficulte
 
-Le jeu propose plusieurs niveaux de difficulté. Pour la première version du jeu, cinq niveaux sont définis, du plus facile au plus difficile. Le niveau joué est choisi par le praticien dans le logiciel PC au moment de générer le QR `creation_patient` et appliqué tel quel par la tablette, comme détaillé plus bas dans la section « Choix du niveau de difficulté ».
+Le jeu propose trois niveaux de difficulte, du plus facile au plus difficile.
 
-Le niveau 1 est introductif. La planche contient peu de visages au total et deux émotions seulement, joie et tristesse, qui sont les plus simples à distinguer. Les visages cibles sont nombreux par rapport au nombre total, ce qui rend la tâche facile sans pression.
+Le niveau 1 utilise la planche 1. Quatre emotions sont representees : joie, colere, tristesse, surprise. La planche est aeree, avec environ trente personnages au total, repartis dans une scene de parc lisible. Les expressions sont exagerees et facilement identifiables. C'est le niveau d'introduction, sans pression temporelle.
 
-Le niveau 2 ajoute une troisième émotion, la colère, et augmente la densité de la planche.
+Le niveau 2 utilise la planche 2. Cinq emotions sont representees, avec l'ajout de la peur. La planche est plus dense, avec environ quarante personnages dans une scene de fete ou de recreation. Les expressions restent claires mais commencent a presenter quelques nuances. C'est le niveau intermediaire, sans pression temporelle.
 
-Le niveau 3 ajoute la peur et continue d'augmenter la densité.
+Le niveau 3 utilise la planche 3. Six emotions sont representees, avec l'ajout du degout. La planche est tres dense, avec environ cinquante a soixante personnages dans une scene complexe. Quelques expressions sont volontairement plus subtiles, par exemple la distinction entre peur et surprise qui ont des expressions faciales proches. C'est le niveau le plus exigeant, sans pression temporelle pour la premiere version.
 
-Le niveau 4 ajoute la surprise. À ce niveau les émotions à distinguer commencent à être proches entre elles, notamment peur et surprise qui ont des expressions faciales similaires.
+L'absence de pression temporelle dans toutes les versions de la premiere iteration est volontaire pour ne pas mettre les patients en situation de stress. Une evolution future pourra introduire un chronometre aux niveaux superieurs si l'usage le justifie.
 
-Le niveau 5 ajoute la dernière émotion, le dégoût, et présente la planche la plus dense. C'est le niveau le plus exigeant à la fois en attention et en discrimination émotionnelle.
+Le niveau joue est choisi par le praticien dans le logiciel PC au moment de generer le QR creation_patient, et transmis a la tablette via le champ niveau_demande de ce QR. La tablette applique strictement ce niveau sans calcul d'adaptation.
 
-Le tableau ci-dessous récapitule les paramètres par niveau.
+## Mecanique generale du jeu
 
-| Niveau | Émotions               | Visages par planche | Cibles à trouver | Temps limite |
-| ------ | ---------------------- | ------------------- | ---------------- | ------------ |
-| 1      | joie, tristesse        | 12                  | 4 à 6            | aucun        |
-| 2      | + colère               | 20                  | 5 à 7            | aucun        |
-| 3      | + peur                 | 30                  | 6 à 9            | aucun        |
-| 4      | + surprise             | 42                  | 7 à 10           | 90 secondes  |
-| 5      | + dégoût               | 56                  | 8 à 12           | 60 secondes  |
+Une session de jeu se deroule en plusieurs manches sur la planche correspondant au niveau choisi. Chaque manche est independante.
 
-Aucune contrainte de temps n'est appliquée aux trois premiers niveaux pour ne pas mettre le patient en situation de stress. Les niveaux 4 et 5 introduisent un temps limite parce qu'à ce stade la pression temporelle devient un travail cognitif pertinent et que le patient a déjà acquis la mécanique du jeu.
+Au debut d'une manche, la tablette affiche en haut de l'ecran la consigne du moment, par exemple "Trouve tous les enfants joyeux". En dessous, la planche complete est affichee dans un canvas qui peut etre scrolle horizontalement et verticalement si la planche depasse la taille de l'ecran tablette.
 
-## Banque d'images et composition des planches
+Le patient tape sur les zones qu'il pense correspondre a la consigne. A chaque tap, l'application verifie si les coordonnees du tap tombent dans la zone cliquable d'un personnage annote. Si oui, l'application compare l'emotion du personnage avec l'emotion consigne.
 
-La banque d'images de base est constituée à partir d'**Open Peeps**, une bibliothèque d'illustrations dessinées à la main par Pablo Stanley, publiée sous licence CC0 (domaine public). Le choix d'illustrations dessinées plutôt que de photographies est délibéré : il évite tout problème de droit à l'image, il évite que des patients reconnaissent des personnes existantes ce qui pourrait perturber l'exercice, et il permet une diversité de styles capillaires, vestimentaires et de traits qui rend les planches visuellement intéressantes.
+Si le tap correspond a un personnage cible (bonne emotion), un point vert avec une icone de validation apparait sur le visage et reste affiche jusqu'a la fin de la manche pour signaler que cette cible est trouvee. Le compteur de cibles trouvees est incremente.
 
-Pour chaque émotion du jeu, on prépare un ensemble de variantes de visages exprimant cette émotion, avec des coiffures et des traits différents pour assurer la diversité visuelle. Une planche est ensuite composée par tirage aléatoire de visages dans la banque, avec un nombre de cibles fixé par la consigne et le reste rempli avec des visages d'autres émotions tirés aléatoirement.
+Si le tap correspond a un personnage non cible (mauvaise emotion), un point rouge avec une icone de croix apparait sur le visage et reste affiche un temps court (environ une seconde) avant de s'effacer. Le compteur de faux positifs est incremente.
 
-Le format des visages stockés est en PNG avec fond transparent, taille standardisée à 200×200 pixels, ce qui permet un affichage net sur la Tab P12 même quand la planche est dense. La banque est embarquée dans l'APK Flutter dans le dossier `assets/visages/` et organisée par sous-dossiers `joie/`, `tristesse/`, `colere/`, `peur/`, `surprise/`, `degout/`.
+Si le tap ne tombe sur aucun personnage annote, rien ne se passe. C'est volontaire : on ne penalise pas un patient qui aurait clique entre deux personnages.
 
-La composition d'une planche à l'écran utilise une grille pseudo-aléatoire : la planche est divisée en cellules de taille uniforme, et dans chaque cellule un visage est placé avec un léger décalage aléatoire pour éviter l'effet "grille parfaite" qui rendrait la recherche trop mécanique. Les cellules vides sont possibles pour éviter une saturation totale.
+La manche se termine quand le patient a trouve tous les personnages cibles de la planche, ou quand le patient appuie sur le bouton "J'ai fini" affiche en bas de l'ecran. Le patient peut aussi appuyer sur "Abandonner la manche" qui termine la manche avec un drapeau d'abandon.
 
-## Métriques enregistrées par session
+Quand la manche se termine, un ecran de transition affiche le score de la manche sous deux formes. Pour le patient, une note ludique en etoiles (de une a trois etoiles selon la performance) avec un message d'encouragement neutre. Pour les donnees envoyees au PC, un score precis sous forme de pourcentage et de details (nombre de cibles trouvees, ratees, faux positifs).
 
-Le jeu enregistre des métriques détaillées à plusieurs niveaux pendant chaque session. Ces métriques sont stockées localement dans la base SQLite de la tablette et seront transférées au logiciel praticien par QR code à la fin de la session.
+La session contient un nombre fixe de manches, typiquement cinq pour la premiere version. La consigne change a chaque manche : la premiere manche peut demander de trouver les enfants joyeux, la deuxieme les tristes, et ainsi de suite. L'ordre des consignes est tire aleatoirement parmi les emotions disponibles au niveau courant, sans repetition tant que toutes les emotions n'ont pas ete utilisees.
 
-Au niveau de la session globale on enregistre le `patient_id` et les `patient_initiales` reçus du PC dans le message `creation_patient` scanné en début de séance, la date et l'heure de début, le niveau de difficulté joué, le nombre de manches jouées, et l'heure de fin. Le score global de la session est calculé comme un agrégat des scores de manches.
+A la fin de la session (cinq manches jouees), un ecran recapitulatif affiche le score global, propose un bouton pour generer le QR de session a scanner par le PC, et un bouton pour quitter sans transferer.
 
-Au niveau de chaque manche on enregistre l'émotion cible demandée, le nombre total de visages dans la planche, le nombre de cibles présentes, le nombre de cibles correctement trouvées, le nombre de faux positifs (cliqués mais non cibles), le nombre de cibles ratées (cibles non cliquées à la fin), le temps total de la manche, et un booléen indiquant si la manche a été interrompue par un abandon plutôt que terminée normalement.
+## Calcul du score
 
-Au niveau de chaque tap on enregistre le timestamp relatif au début de la manche, les coordonnées x et y du tap, l'émotion du visage tapé, et le booléen indiquant si c'était une cible ou un faux positif. Cette granularité permettra au praticien de visualiser le parcours d'attention du patient, par exemple repérer s'il a tapé en zigzag ou méthodiquement.
+Le score d'une manche est calcule comme suit. On note T le nombre de cibles trouvees, R le nombre de cibles ratees (les cibles qui n'ont pas ete cliquees a la fin de la manche), F le nombre de faux positifs (les clics sur des personnages d'une autre emotion).
 
-Les métriques de "patience" et "frustration" mentionnées dans les notes initiales du projet sont déduites de ces données brutes plutôt que mesurées directement. La frustration est inférée d'un taux élevé de faux positifs en peu de temps, d'abandons rapides, ou de longues pauses entre les taps. La patience est inférée du temps moyen pris pour scanner la planche avant le premier tap.
+Le score brut sur cent est calcule par la formule (T / (T + R)) * 100 - F * 5. Le facteur cinq par faux positif est arbitraire pour la premiere version et pourra etre ajuste apres les premiers tests utilisateurs. Le score est borne entre zero et cent.
 
-## Format du payload session
+L'affichage en etoiles cote patient suit la regle suivante. De zero a quarante : une etoile et un message du type "Continue, tu progresses". De quarante-et-un a soixante-quinze : deux etoiles et un message du type "Bien joue". Au-dessus de soixante-quinze : trois etoiles et un message du type "Excellent, tu maitrises". Aucun feedback negatif n'est donne, conformement au principe de bienveillance pose dans la note de cadrage.
 
-À la fin de la session, la tablette construit un payload conforme à la spécification du protocole QR documentée dans `docs/specs/protocole_qr.md`. Le type du message est `session`, la version est 2, et la structure du payload est la suivante.
+Le score global de la session est la moyenne arithmetique des scores des manches.
 
-Le payload contient le `patient_id` et les `patient_initiales` repris tels quels du message `creation_patient` reçu en début de séance, la `session_date` au format ISO 8601 UTC qui marque le début effectif de la séance, le `jeu_type` qui vaut `emotions` pour ce jeu, le `niveau` joué, et un tableau `manches`. Chaque manche contient son `emotion_cible`, ses métriques agrégées, et son tableau `taps`. Chaque tap contient son timestamp relatif, ses coordonnées, l'émotion du visage tapé, et le booléen de réussite.
+## Metriques enregistrees et envoyees au PC
 
-L'enveloppe complète est signée par la tablette avec sa clé privée ed25519, et le PC vérifie la signature à réception comme prévu dans la spec QR.
+Le jeu enregistre des metriques detaillees pendant la session, stockees temporairement dans la base SQLite de la tablette puis transmises au PC via le QR session a la fin de la session.
 
-## Choix du niveau de difficulté
+Au niveau de la session globale on enregistre le patient_id et les patient_initiales recus du PC dans le message creation_patient, la date et l'heure de debut, le niveau joue, le nombre de manches jouees, l'heure de fin, et le score global.
 
-Le niveau de difficulté de chaque session est choisi explicitement par le praticien dans le logiciel PC au moment de générer le QR `creation_patient`. Ce choix s'appuie sur le jugement clinique du praticien à partir de ce qu'il a observé lors des séances précédentes du patient, des objectifs thérapeutiques de la séance courante, et de l'état du patient le jour donné. La valeur saisie est transmise dans le champ `niveau_demande` du message `creation_patient` conformément à la spec QR version 2.
+Au niveau de chaque manche on enregistre l'emotion cible demandee, le numero de la planche utilisee, le nombre total de personnages de cette emotion presents dans la planche, le nombre de cibles trouvees, le nombre de faux positifs, le nombre de cibles ratees, le temps total de la manche en millisecondes, le booleen indiquant si la manche a ete abandonnee, et le score de la manche.
 
-La tablette applique strictement le niveau reçu sans le modifier ni le contester. Elle ne maintient pas d'historique des sessions précédentes du patient et n'effectue aucun calcul d'adaptation. Cette répartition est cohérente avec l'ADR-07 qui confie au PC la responsabilité de l'identification patient et, par extension, les choix qui dépendent de l'historique nominatif.
+Au niveau de chaque tap on enregistre le timestamp relatif au debut de la manche, les coordonnees x et y du tap dans la planche, l'emotion du personnage tape (ou null si le tap n'est tombe sur aucun personnage), et un booleen indiquant si le tap etait correct (cible trouvee). Cette granularite permet au praticien de visualiser le parcours d'attention du patient.
 
-Une évolution post-soutenance est envisagée pour introduire un calcul de niveau recommandé côté PC, basé sur l'historique des sessions reçues précédemment du même patient. Cette recommandation serait transmise via un champ `niveau_recommande` complémentaire ou en remplacement de `niveau_demande` dans le message `creation_patient`. La décision serait alors tracée par un nouvel ADR et le protocole QR évoluerait en version 3. À ce stade du projet et pour le périmètre fin juin, le choix manuel est suffisant et défendable par l'argument que le jugement clinique du praticien prime sur l'algorithme.
+## Ecrans et navigation
 
-## Écrans et navigation
+Le jeu s'integre dans l'application tablette existante. Il est accessible depuis la route /jeu qui est actuellement un placeholder.
 
-Le jeu s'intègre dans l'application tablette existante. Il est accessible depuis la route `/jeu` actuellement occupée par un placeholder. La navigation depuis l'écran d'accueil est revue conformément à l'ADR-07 et à la spec QR version 2 : si un appairage avec le PC existe en base, le bouton "Nouveau patient" ouvre directement le scanner de caméra arrière pour lire un QR `creation_patient` généré par le logiciel PC. Après scan et vérification de signature avec `pc_pub`, la tablette affiche un écran de confirmation du type "Patient MD chargé. Prêt à jouer.", le praticien valide, et la tablette enchaîne sur la sélection de jeu (qui ne propose qu'un jeu pour l'instant), puis sur l'écran de jeu lui-même.
+Le parcours nominal d'une session est le suivant. Apres scan du QR creation_patient et confirmation "Patient MD charge", le patient (ou plutot le praticien qui pilote) clique sur "Commencer le jeu". L'application charge la planche correspondant au niveau et lance la premiere manche.
 
-Aucun écran de sélection ou de création de patient n'est implémenté côté tablette. La feature `profil_patient` initialement envisagée n'existera pas. Le scan du QR `creation_patient` réutilise la cinématique de scan déjà en place pour l'appairage et s'appuie sur les mêmes modules `qr` et `crypto`.
+L'ecran principal du jeu affiche en haut une barre de progression (manche courante sur manches totales) et la consigne du moment ("Trouve les enfants joyeux"). Au centre se trouve le canvas affichant la planche, scrollable si necessaire. En bas se trouvent deux boutons : "J'ai fini" qui valide la manche en l'etat, et "Arreter la session" qui propose une confirmation avant d'abandonner toute la session.
 
-L'écran de jeu lui-même est implémenté dans `lib/features/jeu_emotions/` selon l'arborescence prescrite par le `CLAUDE.md` du sous-projet tablette : `domain.dart` pour les types métier, `data.dart` pour l'accès aux assets et au stockage, `controller.dart` pour les providers Riverpod qui orchestrent la boucle de jeu, et `ui/` pour les widgets.
+Entre deux manches, un ecran de transition de quelques secondes affiche le score de la manche en etoiles, le message d'encouragement, et un bouton "Manche suivante" pour passer a la suite. Le bouton peut etre tape pour avancer plus vite.
 
-L'écran principal du jeu affiche en haut une barre de progression (manche courante sur manches totales) et la consigne du moment. Au centre se trouve la planche scrollable si besoin (probablement pas pour les niveaux 1 à 3, peut-être pour les niveaux 4 et 5 selon la densité). En bas se trouve un bouton "J'ai fini" pour valider la manche et un bouton "Arrêter" pour abandonner la session avec confirmation.
+A la fin de la session, l'ecran recapitulatif affiche le score global, le detail par manche, et deux boutons : "Generer le QR de session" qui ouvre l'ecran d'export QR deja implemente, et "Quitter sans transferer" qui retourne a l'accueil sans envoyer les donnees (mode degrade en cas de probleme).
 
-Quand la manche se termine, un écran de transition affiche brièvement le score de la manche avec un encouragement neutre et bienveillant, puis enchaîne sur la manche suivante au bout de trois secondes ou au tap du patient.
+## Considerations ergonomiques et accessibilite
 
-À la fin de la session, un écran récapitulatif affiche le score global, propose un bouton pour générer le QR de session à scanner par le PC, et un bouton pour quitter sans transférer.
+Le jeu cible des enfants et adolescents. La taille minimale de la zone tactile autour d'un visage doit etre suffisante pour un tap precis. Le rayon de la zone cliquable de chaque personnage est defini dans le JSON d'annotation par le developpeur, typiquement entre vingt et quarante pixels selon la taille du personnage dans la planche. Les zones cliquables sont invisibles pour ne pas perturber le rendu de la scene.
 
-## Considérations ergonomiques et accessibilité
+Les retours visuels (point vert ou rouge) sont accompagnes de retours sonores discrets mais distincts (un son court joyeux pour la cible trouvee, un son neutre pour le faux positif, pas de son negatif aggressif). Des retours haptiques courts sont aussi declenches (vibration de cinquante millisecondes pour un tap correct, cent millisecondes pour un tap incorrect). Tous ces retours peuvent etre desactives dans les parametres si necessaire.
 
-Le jeu cible des enfants et adolescents, donc l'ergonomie tactile doit tenir compte de cibles potentiellement imprécises. La taille minimale d'un visage tactile est fixée à 80 pixels de côté pour la zone de tap effective, même si l'image affichée est plus petite visuellement. Cette zone de tap englobante est invisible pour ne pas perturber le rendu visuel.
+Les couleurs des points de feedback respectent un contraste suffisant pour les patients avec une perception alteree des couleurs : vert vif accompagne d'une icone check, rouge vif accompagne d'une icone croix.
 
-Les retours visuels (point vert ou rouge) sont accompagnés de retours sonores discrets mais distincts, et de retours haptiques courts (vibration de 50 millisecondes pour un tap correct, 100 millisecondes pour un tap incorrect). Ces retours peuvent être désactivés dans les paramètres si nécessaire.
+L'orientation paysage est forcee comme pour le reste de l'application. La planche est concue pour etre lue confortablement sur l'ecran douze pouces de la Tab P12.
 
-Les couleurs des points de feedback respectent un contraste suffisant pour être visibles par des patients avec une perception altérée des couleurs : le vert utilisé est un vert vif `#2ECC71` et le rouge un rouge vif `#E74C3C`, complétés respectivement d'une icône check et d'une icône croix pour ne pas dépendre uniquement de la couleur.
+## Tests prevus
 
-L'orientation paysage est forcée comme pour le reste de l'application.
+Les tests unitaires couvrent la logique de chargement et de parsing du JSON d'annotation (verifier que tous les personnages sont bien lus, que les emotions sont valides, que les coordonnees sont coherentes avec la taille de la planche), la logique de detection de tap (verifier qu'un tap aux coordonnees correctes touche le bon personnage, qu'un tap a cote ne touche rien, qu'un tap sur un personnage deja trouve n'est pas compte deux fois), la logique de calcul de score (verifier la formule avec divers cas), et la logique de fin de manche (terminer quand toutes les cibles sont trouvees, ou sur clic du bouton, ou sur abandon).
 
-## Tests prévus
+Les tests de widget couvrent l'affichage de l'ecran principal du jeu, la reaction aux taps simules sur le canvas, l'enchainement des manches, et l'ecran recapitulatif final.
 
-Les tests unitaires couvrent la logique de composition de planche (tirage aléatoire avec bon nombre de cibles et bonne répartition) et la logique de scoring (calcul correct du taux de réussite et détection des abandons).
+Le test manuel sur Lenovo Tab P12 (tache 13 du sprint) couvre l'ergonomie reelle, la fluidite d'affichage des planches denses, la lisibilite des emotions a taille reelle, la qualite des retours sensoriels et l'experience utilisateur globale.
 
-Les tests de widget couvrent l'affichage de l'écran de jeu, la réaction aux taps simulés sur des visages cibles et non cibles, et l'enchaînement des manches.
+## Risques identifies
 
-Les tests d'intégration couvrent le flux complet d'une session : scan d'un QR `creation_patient` simulé via une image PNG fixture et vérification de signature, jeu de plusieurs manches, génération du QR de session, vérification que le payload produit est conforme à la spec QR version 2.
+Le risque principal de ce modele est la qualite et la coherence des planches generees par ChatGPT. Bien que la premiere planche test produite soit excellente, rien ne garantit que les deux suivantes auront le meme niveau de qualite et de coherence stylistique. Le risque est attenue par le fait que le prompt est tres detaille et reutilisable. En cas de qualite insuffisante d'une planche, on peut iterer plusieurs fois avec des ajustements de prompt jusqu'a obtenir un resultat satisfaisant.
 
-Le test manuel sur Lenovo Tab P12 couvre tout ce que les tests automatisés ne peuvent pas valider : l'ergonomie tactile réelle, la fluidité d'affichage des planches denses, la lisibilité des visages à taille réelle, la qualité des retours haptiques et sonores, et l'expérience utilisateur globale.
+Le second risque est la performance d'affichage d'une grande planche scrollable sur la Tab P12. Une image de 1536x1024 pixels pese typiquement entre cinq cents et mille kilo-octets en PNG. L'affichage dans un widget Flutter avec gestion du scroll devrait etre fluide mais doit etre verifie tot dans l'implementation. Si necessaire, on pourra redimensionner les planches a une resolution adaptee a l'ecran de la tablette.
 
-## Risques identifiés
+Le troisieme risque est la justesse de l'annotation manuelle. Une planche mal annotee (un visage joyeux marque comme triste par erreur) introduirait un biais clinique. L'outil HTML d'annotation prevoit une fonction de revue qui permet au developpeur de relire ses annotations en survolant chaque marqueur, et de corriger les erreurs avant l'export final.
 
-Le risque principal est la qualité et la quantité d'images Open Peeps disponibles pour les six émotions. Le SVG d'Open Peeps permet de composer des personnages mais il faut générer les expressions faciales correspondantes à chaque émotion, ce qui demande un travail de production en amont. Selon les options disponibles dans la bibliothèque, certaines émotions comme le dégoût peuvent être moins bien représentées que d'autres comme la joie. Une tâche préparatoire du sprint 3 est dédiée à la constitution de la banque.
-
-Le second risque est la performance d'affichage sur la Tab P12 avec des planches denses (jusqu'à 56 visages au niveau 5). Flutter gère normalement bien ce type de rendu mais une vérification précoce sur le matériel cible est nécessaire pour éviter des saccades qui rendraient le jeu inutilisable.
-
-Le troisième risque est l'équilibrage des niveaux. Les paramètres proposés dans le tableau sont une première estimation et devront probablement être ajustés après les premiers tests utilisateurs. Une variable de configuration centralisée permettra de modifier ces paramètres sans toucher au code.
+Le quatrieme risque est l'equilibrage du scoring. La formule actuelle (T / (T + R)) * 100 - F * 5 est une premiere estimation. Le facteur de penalite des faux positifs et les seuils des etoiles devront etre ajustes apres les premiers tests utilisateurs reels. Une variable de configuration centralisee dans la feature jeu_emotions permettra de modifier ces parametres sans toucher au code metier.
