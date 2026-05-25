@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/textes.dart';
-import '../features/appairage/controller.dart';
+import '../../../core/textes.dart';
+import '../../jeu_emotions/controller.dart';
 
 class AccueilScreen extends ConsumerWidget {
   const AccueilScreen({super.key});
@@ -15,7 +15,7 @@ class AccueilScreen extends ConsumerWidget {
 
   void _afficherSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
     );
   }
 
@@ -23,12 +23,23 @@ class AccueilScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final appairage = await ref.read(appairageActuelProvider.future);
+    final ouvrirScanner = ref.read(scannerQrProvider);
+    final valeurScannee = await ouvrirScanner(context);
+    if (valeurScannee == null) return;
     if (!context.mounted) return;
-    if (appairage == null) {
-      context.go('/appairage');
-    } else {
-      context.go('/jeu');
+
+    final routage = await ref
+        .read(controleurReceptionQrProvider.notifier)
+        .traiter(valeurScannee);
+    if (!context.mounted) return;
+
+    switch (routage) {
+      case RoutageAppairage():
+        context.go('/appairage');
+      case RoutageConfirmationPatient():
+        context.go('/confirmation-patient');
+      case RoutageErreur(:final message):
+        _afficherSnackBar(context, message);
     }
   }
 

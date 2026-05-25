@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:tablette_flutter/app/accueil_screen.dart';
+import 'package:tablette_flutter/features/accueil/ui/accueil_screen.dart';
 import 'package:tablette_flutter/core/textes.dart';
 import 'package:tablette_flutter/features/appairage/controller.dart';
 

@@ -25,4 +25,19 @@ class Textes {
   static const String titreJeuPlaceholder = 'Jeu';
   static const String messageJeuPlaceholder =
       'Le jeu sera implémenté au sprint 3.';
+
+  static const String titreConfirmationPatient = 'Patient chargé';
+  static String confirmationPatientPret(String initiales) =>
+      'Patient $initiales chargé. Prêt à jouer.';
+  static const String boutonCommencerJeu = 'Commencer le jeu';
+  static const String boutonAnnuler = 'Annuler';
+  static const String messageAucunPatientCharge = 'Aucun patient chargé.';
+
+  static const String erreurTabletteNonAppairee =
+      'Tablette non appairée. Faites d\'abord l\'appairage avec le PC.';
+  static const String erreurPatientNonVerifie =
+      'Patient non vérifié, l\'appairage a peut-être été perdu.';
+  static const String erreurQrIllisible = 'QR illisible, réessayez.';
+  static const String erreurDonneesPatientInvalides =
+      'Données patient invalides.';
 }

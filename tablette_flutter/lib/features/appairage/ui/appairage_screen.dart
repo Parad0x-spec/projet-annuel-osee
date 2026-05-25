@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/textes.dart';
+import '../../../shared_widgets/page_scanner_qr.dart';
 import '../controller.dart';
 import '../domain.dart';
 
@@ -149,40 +149,12 @@ class AppairageScreen extends ConsumerWidget {
 
   Future<void> _ouvrirScanner(BuildContext context, WidgetRef ref) async {
     final valeurScannee = await Navigator.of(context).push<String>(
-      MaterialPageRoute<String>(builder: (_) => const _PageScanner()),
+      MaterialPageRoute<String>(builder: (_) => const PageScannerQr()),
     );
     if (valeurScannee == null) return;
     if (!context.mounted) return;
     await ref
         .read(controleurAppairageProvider.notifier)
         .traiterScan(valeurScannee);
-  }
-}
-
-class _PageScanner extends StatefulWidget {
-  const _PageScanner();
-
-  @override
-  State<_PageScanner> createState() => _PageScannerState();
-}
-
-class _PageScannerState extends State<_PageScanner> {
-  bool _detectionEffectuee = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text(Textes.titreScanner)),
-      body: MobileScanner(
-        onDetect: (capture) {
-          if (_detectionEffectuee) return;
-          if (capture.barcodes.isEmpty) return;
-          final valeur = capture.barcodes.first.rawValue;
-          if (valeur == null) return;
-          _detectionEffectuee = true;
-          Navigator.of(context).pop(valeur);
-        },
-      ),
-    );
   }
 }

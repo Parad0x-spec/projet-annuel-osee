@@ -62,6 +62,88 @@ class DecodeurEnveloppe {
   }
 }
 
+class VerificateurEnveloppe {
+  VerificateurEnveloppe._();
+
+  static Future<ResultatEnveloppe> classifierEtVerifier(
+    String chargeUtileBase64,
+    Appairage? appairage,
+  ) async {
+    final Enveloppe enveloppe;
+    try {
+      enveloppe = DecodeurEnveloppe.decoder(chargeUtileBase64);
+    } catch (_) {
+      return const EnveloppeIllisible();
+    }
+
+    if (enveloppe.version != versionProtocole) {
+      return const EnveloppeIllisible();
+    }
+
+    switch (enveloppe.type) {
+      case typeAppairagePc:
+        return EnveloppeAppairagePc(enveloppe);
+      case typeCreationPatient:
+        return _verifierCreationPatient(enveloppe, appairage);
+      default:
+        return const EnveloppeIllisible();
+    }
+  }
+
+  static Future<ResultatEnveloppe> _verifierCreationPatient(
+    Enveloppe enveloppe,
+    Appairage? appairage,
+  ) async {
+    if (appairage == null) {
+      return const EnveloppeNonAppairee();
+    }
+
+    final patientId = enveloppe.payload['patient_id'];
+    final patientInitiales = enveloppe.payload['patient_initiales'];
+    final niveauDemande = enveloppe.payload['niveau_demande'];
+    if (patientId is! String ||
+        patientInitiales is! String ||
+        niveauDemande is! int) {
+      return const EnveloppeIllisible();
+    }
+
+    final List<int> signature;
+    try {
+      signature = base64.decode(enveloppe.signature);
+    } catch (_) {
+      return const EnveloppeIllisible();
+    }
+
+    final messageSigne = utf8.encode(
+      jsonEncode(<String, dynamic>{
+        'type': enveloppe.type,
+        'version': enveloppe.version,
+        'timestamp': enveloppe.timestamp,
+        'payload': <String, dynamic>{
+          'patient_id': patientId,
+          'patient_initiales': patientInitiales,
+          'niveau_demande': niveauDemande,
+        },
+      }),
+    );
+
+    final signatureValide = await Crypto.verifier(
+      appairage.pcPub,
+      messageSigne,
+      signature,
+    );
+    if (!signatureValide) {
+      return const EnveloppeSignatureInvalide();
+    }
+
+    return EnveloppeCreationPatientVerifiee(
+      patientId: patientId,
+      patientInitiales: patientInitiales,
+      niveauDemande: niveauDemande,
+    );
+  }
+}
+
 class QRRetour {
   final String chargeUtileBase64;
   final String enveloppeJSON;

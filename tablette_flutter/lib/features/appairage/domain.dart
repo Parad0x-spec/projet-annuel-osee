@@ -1,5 +1,6 @@
 const String typeAppairagePc = 'appairage_pc';
 const String typeAppairageTablette = 'appairage_tablette';
+const String typeCreationPatient = 'creation_patient';
 const String typeSession = 'session';
 const int versionProtocole = 2;
 
@@ -77,4 +78,37 @@ class EnveloppeInvalideException implements Exception {
 
   @override
   String toString() => 'EnveloppeInvalideException: $message';
+}
+
+sealed class ResultatEnveloppe {
+  const ResultatEnveloppe();
+}
+
+class EnveloppeAppairagePc extends ResultatEnveloppe {
+  final Enveloppe enveloppe;
+  const EnveloppeAppairagePc(this.enveloppe);
+}
+
+class EnveloppeCreationPatientVerifiee extends ResultatEnveloppe {
+  final String patientId;
+  final String patientInitiales;
+  final int niveauDemande;
+
+  const EnveloppeCreationPatientVerifiee({
+    required this.patientId,
+    required this.patientInitiales,
+    required this.niveauDemande,
+  });
+}
+
+class EnveloppeNonAppairee extends ResultatEnveloppe {
+  const EnveloppeNonAppairee();
+}
+
+class EnveloppeSignatureInvalide extends ResultatEnveloppe {
+  const EnveloppeSignatureInvalide();
+}
+
+class EnveloppeIllisible extends ResultatEnveloppe {
+  const EnveloppeIllisible();
 }
