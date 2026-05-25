@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Annotateur de planches - jeu des emotions</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #1e1e1e;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+header {
+    background: #2d2d2d;
+    padding: 12px 20px;
+    border-bottom: 1px solid #444;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+header h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+header .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+button, select, input[type=file] {
+    background: #3a3a3a;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+button:hover { background: #4a4a4a; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+select { padding: 6px 8px; }
+.btn-primary { background: #0e639c; border-color: #0e639c; }
+.btn-primary:hover { background: #1177bb; }
+.btn-danger { background: #a1260d; border-color: #a1260d; }
+.btn-danger:hover { background: #c4361b; }
+main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+#zone-image {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background: #181818;
+    background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f1f1f 75%), linear-gradient(-45deg, transparent 75%, #1f1f1f 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+#wrapper-image {
+    position: relative;
+    display: inline-block;
+    min-width: 100%;
+    min-height: 100%;
+}
+#image-planche {
+    display: block;
+    max-width: none;
+}
+#wrapper-image.vide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #888;
+    text-align: center;
+}
+.marqueur {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid white;
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    user-select: none;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.3);
+}
+.marqueur:hover { transform: translate(-50%, -50%) scale(1.1); }
+.marqueur.selectionne { outline: 3px solid #fff; outline-offset: 2px; }
+.emo-joie { background: rgba(255, 193, 7, 0.7); }
+.emo-tristesse { background: rgba(33, 150, 243, 0.7); }
+.emo-colere { background: rgba(244, 67, 54, 0.7); }
+.emo-peur { background: rgba(156, 39, 176, 0.7); }
+.emo-surprise { background: rgba(76, 175, 80, 0.7); }
+.emo-degout { background: rgba(121, 85, 72, 0.7); }
+#panneau-droit {
+    width: 320px;
+    background: #252525;
+    border-left: 1px solid #444;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#panneau-droit h2 {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0;
+    padding: 12px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #444;
+}
+.section-panneau { padding: 12px 16px; border-bottom: 1px solid #333; }
+.section-panneau label {
+    display: block;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+.section-panneau .ligne { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.section-panneau .ligne label { margin: 0; min-width: 60px; }
+.section-panneau input[type=number] {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 4px 6px;
+    border-radius: 3px;
+    width: 70px;
+    font-size: 13px;
+}
+.compteurs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 12px;
+}
+.compteur {
+    background: #1e1e1e;
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+.compteur .val { font-weight: bold; }
+#liste-marqueurs {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+.item-marqueur {
+    background: #1e1e1e;
+    padding: 6px 10px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-left: 4px solid;
+}
+.item-marqueur:hover { background: #2a2a2a; }
+.item-marqueur.actif { background: #2a3f5f; }
+.item-marqueur.emo-joie { border-left-color: #ffc107; }
+.item-marqueur.emo-tristesse { border-left-color: #2196f3; }
+.item-marqueur.emo-colere { border-left-color: #f44336; }
+.item-marqueur.emo-peur { border-left-color: #9c27b0; }
+.item-marqueur.emo-surprise { border-left-color: #4caf50; }
+.item-marqueur.emo-degout { border-left-color: #795548; }
+.item-marqueur .badge-emo { font-weight: bold; }
+.item-marqueur .badge-coords { color: #888; font-size: 11px; }
+.aide {
+    background: #1e1e1e;
+    padding: 10px 14px;
+    border-top: 1px solid #444;
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.6;
+}
+.aide kbd {
+    background: #3a3a3a;
+    border: 1px solid #555;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+#zoom-info {
+    position: fixed;
+    bottom: 10px;
+    left: 340px;
+    background: rgba(0,0,0,0.7);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #ccc;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+<header>
+    <h1>Annotateur de planches</h1>
+    <div class="controls">
+        <input type="file" id="charger-image" accept="image/*">
+        <input type="file" id="charger-json" accept=".json" style="display:none">
+        <button id="btn-charger-json">Charger annotations</button>
+        <select id="emotion-courante">
+            <option value="joie">joie</option>
+            <option value="tristesse">tristesse</option>
+            <option value="colere">colère</option>
+            <option value="peur">peur</option>
+            <option value="surprise">surprise</option>
+            <option value="degout">dégoût</option>
+        </select>
+        <label style="font-size:12px;">rayon <input type="number" id="rayon-defaut" value="30" min="10" max="80" style="width:50px"></label>
+        <button id="btn-exporter" class="btn-primary">Exporter JSON</button>
+        <button id="btn-tout-effacer" class="btn-danger">Tout effacer</button>
+    </div>
+</header>
+<main>
+    <div id="zone-image">
+        <div id="wrapper-image" class="vide">
+            <div>
+                <p>Charge une image de planche pour commencer</p>
+                <p style="font-size:13px; opacity:0.7">Utilise le bouton "Charger image" en haut a gauche</p>
+            </div>
+        </div>
+    </div>
+    <aside id="panneau-droit">
+        <h2>Annotations</h2>
+        <div class="section-panneau">
+            <div class="compteurs" id="compteurs"></div>
+        </div>
+        <div class="section-panneau" id="zoom-niveau" style="display:none">
+            <div class="ligne">
+                <label>Zoom</label>
+                <button id="zoom-moins">-</button>
+                <span id="zoom-pct">100%</span>
+                <button id="zoom-plus">+</button>
+                <button id="zoom-reset">100%</button>
+                <button id="zoom-fit">Fit</button>
+            </div>
+        </div>
+        <h2>Marqueurs poses</h2>
+        <div id="liste-marqueurs"></div>
+        <div class="aide">
+            <strong>Aide</strong><br>
+            Clic sur un visage = poser un marqueur avec l'emotion courante.<br>
+            Clic sur un marqueur existant = le selectionner pour modifier son emotion ou rayon, ou le supprimer.<br>
+            <kbd>Suppr</kbd> ou <kbd>Backspace</kbd> = supprimer le marqueur selectionne.<br>
+            <kbd>1</kbd>-<kbd>6</kbd> = changer l'emotion courante.<br>
+        </div>
+    </aside>
+</main>
+<div id="zoom-info" style="display:none"></div>
+
+<script>
+(function(){
+    var marqueurs = [];
+    var selectionne = null;
+    var imageChargee = null;
+    var nomImage = "";
+    var compteurId = 0;
+    var zoom = 1;
+    
+    var EMOTIONS = ["joie", "tristesse", "colere", "peur", "surprise", "degout"];
+    
+    var wrapper = document.getElementById("wrapper-image");
+    var zone = document.getElementById("zone-image");
+    var selectEmotion = document.getElementById("emotion-courante");
+    var inputRayon = document.getElementById("rayon-defaut");
+    var liste = document.getElementById("liste-marqueurs");
+    var compteurs = document.getElementById("compteurs");
+    var zoomInfo = document.getElementById("zoom-info");
+    var zoomPct = document.getElementById("zoom-pct");
+    var zoomSection = document.getElementById("zoom-niveau");
+
+    document.getElementById("charger-image").addEventListener("change", function(e){
+        var f = e.target.files[0];
+        if (!f) return;
+        nomImage = f.name;
+        var lecteur = new FileReader();
+        lecteur.onload = function(ev){
+            chargerImage(ev.target.result);
+        };
+        lecteur.readAsDataURL(f);
+    });
+
+    document.getElementById("btn-charger-json").addEventListener("click", function(){
+        if (!imageChargee) {
+            alert("Charge d'abord une image avant de restaurer les annotations.");
+            return;
+        }
+        document.getElementById("charger-json").click();
+    });
+
+    document.getElementById("charger-json").addEventListener("change", function(e){
+        var f = e.target.files[0];
+        if (!f) return;
+        var lecteur = new FileReader();
+        lecteur.onload = function(ev){
+            try {
+                var donnees = JSON.parse(ev.target.result);
+                if (!donnees.personnages || !Array.isArray(donnees.personnages)) {
+                    alert("JSON invalide : champ 'personnages' manquant.");
+                    return;
+                }
+                marqueurs = [];
+                donnees.personnages.forEach(function(p){
+                    marqueurs.push({
+                        id: ++compteurId,
+                        x: p.x,
+                        y: p.y,
+                        rayon: p.rayon || 30,
+                        emotion: p.emotion
+                    });
+                });
+                rendreMarqueurs();
+                majListe();
+                majCompteurs();
+            } catch(err) {
+                alert("Erreur de parsing JSON: " + err.message);
+            }
+        };
+        lecteur.readAsText(f);
+    });
+
+    function chargerImage(src) {
+        wrapper.classList.remove("vide");
+        wrapper.innerHTML = '';
+        var img = new Image();
+        img.id = "image-planche";
+        img.onload = function(){
+            imageChargee = { largeur: img.naturalWidth, hauteur: img.naturalHeight };
+            wrapper.style.width = img.naturalWidth + "px";
+            wrapper.style.height = img.naturalHeight + "px";
+            zoomSection.style.display = "block";
+            appliquerZoom();
+        };
+        img.src = src;
+        wrapper.appendChild(img);
+        wrapper.addEventListener("click", surClickWrapper);
+        marqueurs = [];
+        selectionne = null;
+        majListe();
+        majCompteurs();
+    }
+
+    function surClickWrapper(e) {
+        if (!imageChargee) return;
+        if (e.target.classList && e.target.classList.contains("marqueur")) return;
+        var rect = wrapper.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / zoom;
+        var y = (e.clientY - rect.top) / zoom;
+        var emo = selectEmotion.value;
+        var rayon = parseInt(inputRayon.value, 10) || 30;
+        marqueurs.push({
+            id: ++compteurId,
+            x: Math.round(x),
+            y: Math.round(y),
+            rayon: rayon,
+            emotion: emo
+        });
+        rendreMarqueurs();
+        majListe();
+        majCompteurs();
+    }
+
+    function rendreMarqueurs() {
+        var anciens = wrapper.querySelectorAll(".marqueur");
+        anciens.forEach(function(n){ n.remove(); });
+        marqueurs.forEach(function(m){
+            var div = document.createElement("div");
+            div.className = "marqueur emo-" + m.emotion;
+            div.dataset.id = m.id;
+            div.style.left = m.x + "px";
+            div.style.top = m.y + "px";
+            div.style.width = (m.rayon * 2) + "px";
+            div.style.height = (m.rayon * 2) + "px";
+            div.textContent = m.emotion.charAt(0).toUpperCase();
+            if (selectionne && selectionne.id === m.id) div.classList.add("selectionne");
+            div.addEventListener("click", function(ev){
+                ev.stopPropagation();
+                selectionne = m;
+                rendreMarqueurs();
+                majListe();
+                if (confirm("Marqueur " + m.emotion + " a (" + m.x + ", " + m.y + ") rayon " + m.rayon + ".\n\nOK = changer l'emotion, Annuler = supprimer.")) {
+                    var nouvelleEmotion = prompt("Nouvelle emotion (joie, tristesse, colere, peur, surprise, degout):", m.emotion);
+                    if (nouvelleEmotion && EMOTIONS.indexOf(nouvelleEmotion) !== -1) {
+                        m.emotion = nouvelleEmotion;
+                        var nouveauRayon = prompt("Nouveau rayon (en pixels):", m.rayon);
+                        if (nouveauRayon !== null) {
+                            m.rayon = parseInt(nouveauRayon, 10) || m.rayon;
+                        }
+                        rendreMarqueurs();
+                        majListe();
+                        majCompteurs();
+                    } else if (nouvelleEmotion !== null) {
+                        alert("Emotion invalide. Choisis parmi: " + EMOTIONS.join(", "));
+                    }
+                } else {
+                    if (confirm("Supprimer ce marqueur ?")) {
+                        marqueurs = marqueurs.filter(function(x){ return x.id !== m.id; });
+                        selectionne = null;
+                        rendreMarqueurs();
+                        majListe();
+                        majCompteurs();
+                    }
+                }
+            });
+            wrapper.appendChild(div);
+        });
+        appliquerZoom();
+    }
+
+    function majListe() {
+        liste.innerHTML = "";
+        if (marqueurs.length === 0) {
+            liste.innerHTML = '<div style="color:#888; font-size:12px; padding:8px; text-align:center;">Aucun marqueur pose</div>';
+            return;
+        }
+        marqueurs.slice().reverse().forEach(function(m){
+            var d = document.createElement("div");
+            d.className = "item-marqueur emo-" + m.emotion;
+            if (selectionne && selectionne.id === m.id) d.classList.add("actif");
+            d.innerHTML = '<span class="badge-emo">' + m.emotion + '</span><span class="badge-coords">(' + m.x + ',' + m.y + ') r=' + m.rayon + '</span>';
+            d.addEventListener("click", function(){
+                selectionne = m;
+                rendreMarqueurs();
+                majListe();
+                var el = wrapper.querySelector('.marqueur[data-id="' + m.id + '"]');
+                if (el) el.scrollIntoView({behavior:"smooth", block:"center", inline:"center"});
+            });
+            liste.appendChild(d);
+        });
+    }
+
+    function majCompteurs() {
+        var counts = { joie:0, tristesse:0, colere:0, peur:0, surprise:0, degout:0 };
+        marqueurs.forEach(function(m){ if (counts.hasOwnProperty(m.emotion)) counts[m.emotion]++; });
+        compteurs.innerHTML = "";
+        Object.keys(counts).forEach(function(emo){
+            var d = document.createElement("div");
+            d.className = "compteur";
+            d.innerHTML = '<span>' + emo + '</span><span class="val">' + counts[emo] + '</span>';
+            compteurs.appendChild(d);
+        });
+        var total = document.createElement("div");
+        total.className = "compteur";
+        total.style.gridColumn = "1 / -1";
+        total.innerHTML = '<span><strong>Total</strong></span><span class="val"><strong>' + marqueurs.length + '</strong></span>';
+        compteurs.appendChild(total);
+    }
+
+    document.getElementById("btn-exporter").addEventListener("click", function(){
+        if (!imageChargee) { alert("Charge d'abord une image."); return; }
+        if (marqueurs.length === 0) { if (!confirm("Aucun marqueur pose. Exporter quand meme ?")) return; }
+        var donnees = {
+            planche: nomImage,
+            largeur: imageChargee.largeur,
+            hauteur: imageChargee.hauteur,
+            personnages: marqueurs.map(function(m){ return { x: m.x, y: m.y, rayon: m.rayon, emotion: m.emotion }; })
+        };
+        var blob = new Blob([JSON.stringify(donnees, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = nomImage.replace(/\.[^.]+$/, "") + ".json";
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("btn-tout-effacer").addEventListener("click", function(){
+        if (marqueurs.length === 0) return;
+        if (!confirm("Effacer tous les marqueurs ?")) return;
+        marqueurs = [];
+        selectionne = null;
+        rendreMarqueurs();
+        majListe();
+        majCompteurs();
+    });
+
+    document.getElementById("zoom-moins").addEventListener("click", function(){ zoom = Math.max(0.1, zoom - 0.1); appliquerZoom(); });
+    document.getElementById("zoom-plus").addEventListener("click", function(){ zoom = Math.min(3, zoom + 0.1); appliquerZoom(); });
+    document.getElementById("zoom-reset").addEventListener("click", function(){ zoom = 1; appliquerZoom(); });
+    document.getElementById("zoom-fit").addEventListener("click", function(){
+        if (!imageChargee) return;
+        var rectZone = zone.getBoundingClientRect();
+        var zx = rectZone.width / imageChargee.largeur;
+        var zy = rectZone.height / imageChargee.hauteur;
+        zoom = Math.min(zx, zy) * 0.95;
+        appliquerZoom();
+    });
+
+    function appliquerZoom() {
+        if (!imageChargee) return;
+        wrapper.style.transform = "scale(" + zoom + ")";
+        wrapper.style.transformOrigin = "0 0";
+        zoomPct.textContent = Math.round(zoom * 100) + "%";
+        zone.style.minHeight = (imageChargee.hauteur * zoom) + "px";
+    }
+
+    document.addEventListener("keydown", function(e){
+        if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+        if (e.key === "Delete" || e.key === "Backspace") {
+            if (selectionne) {
+                marqueurs = marqueurs.filter(function(m){ return m.id !== selectionne.id; });
+                selectionne = null;
+                rendreMarqueurs();
+                majListe();
+                majCompteurs();
+                e.preventDefault();
+            }
+        }
+        var num = parseInt(e.key, 10);
+        if (num >= 1 && num <= 6) {
+            selectEmotion.value = EMOTIONS[num - 1];
+        }
+    });
+
+    majCompteurs();
+})();
+</script>
+</body>
+</html>
