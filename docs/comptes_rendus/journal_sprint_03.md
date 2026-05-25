@@ -1,4 +1,4 @@
-# Sprint 3 - Compte rendu
+# Sprint 3 - Journal de bord
 
 ## Objectifs initiaux
 
@@ -15,7 +15,3 @@ La couverture de tests a été étendue en conséquence : tests unitaires sur la
 ## Décisions prises en cours de sprint
 
 Deux décisions structurantes ont été prises pendant cette session. La première est le regroupement des tâches cinq et six en une seule tâche comptée comme groupée, pour la cohérence de la cinématique et l'unité du commit. La seconde est le déplacement de l'écran d'accueil depuis `lib/app/` vers `lib/features/accueil/ui/`, afin d'aligner sa localisation sur l'architecture par feature documentée dans le `CLAUDE.md` du sous-projet et sur le chemin désigné par le plan de sprint ; ce déplacement a entraîné la mise à jour du routeur et du test d'accueil. Sur le plan technique, le point délicat a été la vérification de signature côté tablette, première vérification de signature entrante du projet : le corps à signer est reconstruit dans le même ordre de champs et la même sérialisation compacte que ceux produits par le PC, ce qui garantit l'interopérabilité des octets signés entre Go et Dart. Aucun nouveau paquet n'a été nécessaire et aucun ADR nouveau n'était requis, la décision d'identification patient étant déjà couverte par l'ADR-07.
-
-## Défauts identifiés et reste à faire
-
-Le patient chargé n'est pour l'instant maintenu qu'en mémoire dans `sessionEnCoursProvider` et n'est pas persisté en SQLite, ce qui est conforme au périmètre de la tâche mais devra être traité avec l'export de session à la tâche onze. Le type `Session` créé dans la feature `jeu_emotions` est volontairement vide et sera enrichi à cette même tâche. Le test interactif sur la Lenovo Tab P12 n'a pas été réalisé pendant cette session ; il est reporté au moment où l'export de session sera câblé, la validation s'appuyant pour l'instant sur les tests automatisés. Restent à traiter les tâches sept à quatorze du plan : la constitution de la banque d'images Open Peeps, la logique métier du jeu, l'application du niveau demandé, l'interface graphique du jeu, l'export de session par QR, la réception côté PC du QR `session`, le test manuel complet de bout en bout et la clôture du présent compte rendu.
