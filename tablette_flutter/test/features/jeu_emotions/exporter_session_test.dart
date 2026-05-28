@@ -37,6 +37,7 @@ void main() {
 
       final enveloppeQr = await construireExportSession(
         etat: _etatCharge(),
+        parties: const <Partie>[],
         appairage: appairage,
       );
 
@@ -47,7 +48,7 @@ void main() {
       expect(payload['patient_initiales'], 'MD');
       expect(payload['niveau'], 4);
       expect(payload['jeu_type'], 'emotions');
-      expect(payload['manches'], isEmpty);
+      expect(payload['parties'], isEmpty);
 
       final octetsASigner = utf8.encode(
         ConstructeurEnveloppe.serialiserPourSignature(
@@ -68,6 +69,7 @@ void main() {
       expect(
         () => construireExportSession(
           etat: const AucunPatientCharge(),
+          parties: const <Partie>[],
           appairage: null,
         ),
         throwsA(isA<AucunPatientChargeException>()),
@@ -77,9 +79,45 @@ void main() {
     test('leve AppairageIntrouvableException si la tablette n\'est pas appairee',
         () {
       expect(
-        () => construireExportSession(etat: _etatCharge(), appairage: null),
+        () => construireExportSession(
+          etat: _etatCharge(),
+          parties: const <Partie>[],
+          appairage: null,
+        ),
         throwsA(isA<AppairageIntrouvableException>()),
       );
+    });
+
+    test('inclut les parties accumulees dans le payload', () async {
+      final appairage = await _appairageTest();
+      const partie = Partie(
+        emotionCible: 'joie',
+        numeroPlanche: 2,
+        nbCiblesTotal: 4,
+        nbCiblesTrouvees: 3,
+        nbFauxPositifs: 1,
+        nbCiblesRatees: 1,
+        tempsTotalMs: 30000,
+        modeFin: ModeFin.termineeBouton,
+        score: 70,
+      );
+
+      final enveloppeQr = await construireExportSession(
+        etat: _etatCharge(),
+        parties: const <Partie>[partie],
+        appairage: appairage,
+      );
+
+      final enveloppe =
+          jsonDecode(enveloppeQr.enveloppeJSON) as Map<String, dynamic>;
+      final payload = enveloppe['payload'] as Map<String, dynamic>;
+      final parties = payload['parties'] as List<dynamic>;
+      expect(parties, hasLength(1));
+      final p0 = parties[0] as Map<String, dynamic>;
+      expect(p0['emotion_cible'], 'joie');
+      expect(p0['numero_planche'], 2);
+      expect(p0['score'], 70);
+      expect(p0['mode_fin'], 'bouton');
     });
   });
 

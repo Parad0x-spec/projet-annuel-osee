@@ -32,12 +32,233 @@ class ControleurSession extends Notifier<EtatSession> {
   }
 
   void reinitialiser() {
+    ref.read(partiesSeanceProvider.notifier).vider();
     state = const AucunPatientCharge();
   }
 }
 
 final sessionEnCoursProvider =
     NotifierProvider<ControleurSession, EtatSession>(ControleurSession.new);
+
+class ControleurPartiesSeance extends Notifier<List<Partie>> {
+  @override
+  List<Partie> build() => const <Partie>[];
+
+  void ajouter(Partie partie) {
+    state = <Partie>[...state, partie];
+  }
+
+  void vider() {
+    state = const <Partie>[];
+  }
+}
+
+final partiesSeanceProvider =
+    NotifierProvider<ControleurPartiesSeance, List<Partie>>(
+      ControleurPartiesSeance.new,
+    );
+
+class MoteurPartie {
+  final Planche planche;
+  final int numeroPlanche;
+  final String emotionCible;
+  final int Function() horlogeMs;
+
+  final Set<int> _indicesTrouves = <int>{};
+  final List<Tap> _taps = <Tap>[];
+  int _nbFauxPositifs = 0;
+  late final int _tempsDebutMs;
+  late final int _nbCiblesTotal;
+
+  MoteurPartie({
+    required this.planche,
+    required this.numeroPlanche,
+    required this.emotionCible,
+    required this.horlogeMs,
+  }) {
+    _tempsDebutMs = horlogeMs();
+    _nbCiblesTotal = planche.nombreCiblesPourEmotion(emotionCible);
+  }
+
+  int get nbCiblesTotal => _nbCiblesTotal;
+  int get nbCiblesTrouvees => _indicesTrouves.length;
+  int get nbFauxPositifs => _nbFauxPositifs;
+  Set<int> get indicesTrouves => Set.unmodifiable(_indicesTrouves);
+  List<Tap> get taps => List.unmodifiable(_taps);
+  bool get toutesCiblesTrouvees =>
+      _nbCiblesTotal > 0 && _indicesTrouves.length == _nbCiblesTotal;
+
+  ResultatTap taper(int tapX, int tapY) {
+    final maintenant = horlogeMs();
+    final tempsMs = maintenant - _tempsDebutMs;
+    int? indexTouche;
+    for (var i = 0; i < planche.personnages.length; i++) {
+      if (estDansZone(tapX, tapY, planche.personnages[i])) {
+        indexTouche = i;
+        break;
+      }
+    }
+
+    if (indexTouche == null) {
+      _taps.add(
+        Tap(
+          timestampMs: tempsMs,
+          x: tapX,
+          y: tapY,
+          emotionTouchee: null,
+          correct: false,
+        ),
+      );
+      return const ResultatTap.aucun();
+    }
+
+    final perso = planche.personnages[indexTouche];
+    if (perso.emotion == emotionCible) {
+      final dejaTrouvee = _indicesTrouves.contains(indexTouche);
+      if (!dejaTrouvee) {
+        _indicesTrouves.add(indexTouche);
+      }
+      _taps.add(
+        Tap(
+          timestampMs: tempsMs,
+          x: tapX,
+          y: tapY,
+          emotionTouchee: perso.emotion,
+          correct: true,
+        ),
+      );
+      return ResultatTap.cible(indexPersonnage: indexTouche, dejaTrouvee: dejaTrouvee);
+    } else {
+      _nbFauxPositifs += 1;
+      _taps.add(
+        Tap(
+          timestampMs: tempsMs,
+          x: tapX,
+          y: tapY,
+          emotionTouchee: perso.emotion,
+          correct: false,
+        ),
+      );
+      return ResultatTap.fauxPositif(indexPersonnage: indexTouche);
+    }
+  }
+
+  Partie terminer(ModeFin modeFin) {
+    final tempsTotalMs = horlogeMs() - _tempsDebutMs;
+    final nbTrouvees = _indicesTrouves.length;
+    final nbRatees = _nbCiblesTotal - nbTrouvees;
+    final score = calculerScore(
+      T: nbTrouvees,
+      R: nbRatees,
+      F: _nbFauxPositifs,
+    );
+    return Partie(
+      emotionCible: emotionCible,
+      numeroPlanche: numeroPlanche,
+      nbCiblesTotal: _nbCiblesTotal,
+      nbCiblesTrouvees: nbTrouvees,
+      nbFauxPositifs: _nbFauxPositifs,
+      nbCiblesRatees: nbRatees,
+      tempsTotalMs: tempsTotalMs,
+      modeFin: modeFin,
+      score: score,
+    );
+  }
+}
+
+sealed class ResultatTap {
+  const ResultatTap();
+  const factory ResultatTap.aucun() = ResultatAucun;
+  const factory ResultatTap.cible({
+    required int indexPersonnage,
+    required bool dejaTrouvee,
+  }) = ResultatCible;
+  const factory ResultatTap.fauxPositif({required int indexPersonnage}) =
+      ResultatFauxPositif;
+}
+
+class ResultatAucun extends ResultatTap {
+  const ResultatAucun();
+}
+
+class ResultatCible extends ResultatTap {
+  final int indexPersonnage;
+  final bool dejaTrouvee;
+  const ResultatCible({
+    required this.indexPersonnage,
+    required this.dejaTrouvee,
+  });
+}
+
+class ResultatFauxPositif extends ResultatTap {
+  final int indexPersonnage;
+  const ResultatFauxPositif({required this.indexPersonnage});
+}
+
+sealed class EtatPartie {
+  const EtatPartie();
+}
+
+class AucunePartie extends EtatPartie {
+  const AucunePartie();
+}
+
+class PartieEnCours extends EtatPartie {
+  final MoteurPartie moteur;
+  const PartieEnCours(this.moteur);
+}
+
+class ControleurPartie extends Notifier<EtatPartie> {
+  DateTime Function() horloge = DateTime.now;
+
+  @override
+  EtatPartie build() => const AucunePartie();
+
+  Future<void> demarrerPartie({
+    required int numeroPlanche,
+    required String emotion,
+  }) async {
+    final planche = await chargerPlanche(numeroPlanche);
+    state = PartieEnCours(
+      MoteurPartie(
+        planche: planche,
+        numeroPlanche: numeroPlanche,
+        emotionCible: emotion,
+        horlogeMs: () => horloge().millisecondsSinceEpoch,
+      ),
+    );
+  }
+
+  ResultatTap taper(int tapX, int tapY) {
+    final etatCourant = state;
+    if (etatCourant is! PartieEnCours) {
+      throw const PartieNonDemarreeException();
+    }
+    final resultat = etatCourant.moteur.taper(tapX, tapY);
+    state = PartieEnCours(etatCourant.moteur);
+    return resultat;
+  }
+
+  Partie terminer(ModeFin modeFin) {
+    final etatCourant = state;
+    if (etatCourant is! PartieEnCours) {
+      throw const PartieNonDemarreeException();
+    }
+    final partie = etatCourant.moteur.terminer(modeFin);
+    ref.read(partiesSeanceProvider.notifier).ajouter(partie);
+    state = const AucunePartie();
+    return partie;
+  }
+}
+
+final controleurPartieProvider =
+    NotifierProvider<ControleurPartie, EtatPartie>(ControleurPartie.new);
+
+class PartieNonDemarreeException implements Exception {
+  const PartieNonDemarreeException();
+  @override
+  String toString() => 'PartieNonDemarreeException';
+}
 
 typedef OuvrirScanner = Future<String?> Function(BuildContext context);
 
@@ -127,6 +348,7 @@ class AppairageIntrouvableException implements Exception {
 
 Future<EnveloppeQr> construireExportSession({
   required EtatSession etat,
+  required List<Partie> parties,
   required Appairage? appairage,
   DateTime? horodatage,
 }) {
@@ -143,9 +365,8 @@ Future<EnveloppeQr> construireExportSession({
     patientId: patient.patientId,
     patientInitiales: patient.patientInitiales,
     sessionDate: maintenant,
-    jeuType: jeuTypeEmotions,
-    niveau: patient.niveauDemande,
-    manches: const <Manche>[],
+    niveauDemande: patient.niveauDemande,
+    parties: parties,
   );
 
   return construireQrSession(
@@ -158,8 +379,10 @@ Future<EnveloppeQr> construireExportSession({
 Future<EnveloppeQr> exporterSession(Ref ref, {DateTime? horodatage}) async {
   final appairage = await ref.read(appairageActuelProvider.future);
   final etat = ref.read(sessionEnCoursProvider);
+  final parties = ref.read(partiesSeanceProvider);
   return construireExportSession(
     etat: etat,
+    parties: parties,
     appairage: appairage,
     horodatage: horodatage,
   );

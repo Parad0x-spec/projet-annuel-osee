@@ -36,77 +36,152 @@ class PayloadCreationPatientInvalideException implements Exception {
 
 const String jeuTypeEmotions = 'emotions';
 
+const String emotionJoie = 'joie';
+const String emotionColere = 'colere';
+const String emotionTristesse = 'tristesse';
+const String emotionPeur = 'peur';
+
+const Set<String> emotionsValides = <String>{
+  emotionJoie,
+  emotionColere,
+  emotionTristesse,
+  emotionPeur,
+};
+
+const int penaliteFauxPositif = 5;
+const int seuilDeuxEtoiles = 41;
+const int seuilTroisEtoiles = 76;
+
+class PersonnageAnnotation {
+  final int x;
+  final int y;
+  final int rayon;
+  final String emotion;
+
+  const PersonnageAnnotation({
+    required this.x,
+    required this.y,
+    required this.rayon,
+    required this.emotion,
+  });
+}
+
+class Planche {
+  final String cheminAsset;
+  final int largeur;
+  final int hauteur;
+  final List<PersonnageAnnotation> personnages;
+
+  const Planche({
+    required this.cheminAsset,
+    required this.largeur,
+    required this.hauteur,
+    required this.personnages,
+  });
+
+  int nombreCiblesPourEmotion(String emotion) {
+    return personnages.where((p) => p.emotion == emotion).length;
+  }
+}
+
+bool estDansZone(int tapX, int tapY, PersonnageAnnotation personnage) {
+  final dx = tapX - personnage.x;
+  final dy = tapY - personnage.y;
+  return dx * dx + dy * dy <= personnage.rayon * personnage.rayon;
+}
+
+class Tap {
+  final int timestampMs;
+  final int x;
+  final int y;
+  final String? emotionTouchee;
+  final bool correct;
+
+  const Tap({
+    required this.timestampMs,
+    required this.x,
+    required this.y,
+    required this.emotionTouchee,
+    required this.correct,
+  });
+}
+
+enum ModeFin { termineeBouton, termineeAuto, abandonnee }
+
+String modeFinVersString(ModeFin mode) {
+  switch (mode) {
+    case ModeFin.termineeBouton:
+      return 'bouton';
+    case ModeFin.termineeAuto:
+      return 'auto';
+    case ModeFin.abandonnee:
+      return 'abandon';
+  }
+}
+
+class Partie {
+  final String emotionCible;
+  final int numeroPlanche;
+  final int nbCiblesTotal;
+  final int nbCiblesTrouvees;
+  final int nbFauxPositifs;
+  final int nbCiblesRatees;
+  final int tempsTotalMs;
+  final ModeFin modeFin;
+  final int score;
+
+  const Partie({
+    required this.emotionCible,
+    required this.numeroPlanche,
+    required this.nbCiblesTotal,
+    required this.nbCiblesTrouvees,
+    required this.nbFauxPositifs,
+    required this.nbCiblesRatees,
+    required this.tempsTotalMs,
+    required this.modeFin,
+    required this.score,
+  });
+
+  Map<String, dynamic> versJson() => <String, dynamic>{
+    'emotion_cible': emotionCible,
+    'numero_planche': numeroPlanche,
+    'nb_cibles_total': nbCiblesTotal,
+    'nb_cibles_trouvees': nbCiblesTrouvees,
+    'nb_faux_positifs': nbFauxPositifs,
+    'nb_cibles_ratees': nbCiblesRatees,
+    'temps_total_ms': tempsTotalMs,
+    'mode_fin': modeFinVersString(modeFin),
+    'score': score,
+  };
+}
+
 class Session {
   final String patientId;
   final String patientInitiales;
   final DateTime sessionDate;
-  final String jeuType;
-  final int niveau;
-  final List<Manche> manches;
+  final int niveauDemande;
+  final List<Partie> parties;
 
   const Session({
     required this.patientId,
     required this.patientInitiales,
     required this.sessionDate,
-    required this.jeuType,
-    required this.niveau,
-    required this.manches,
+    required this.niveauDemande,
+    required this.parties,
   });
 }
 
-class Manche {
-  final String emotionCible;
-  final int nombreVisagesPlanche;
-  final int nombreCiblesPresentes;
-  final int nombreCiblesTrouvees;
-  final int nombreFauxPositifs;
-  final int nombreCiblesRatees;
-  final int tempsTotalMs;
-  final bool abandonnee;
-  final List<Tap> taps;
-
-  const Manche({
-    required this.emotionCible,
-    required this.nombreVisagesPlanche,
-    required this.nombreCiblesPresentes,
-    required this.nombreCiblesTrouvees,
-    required this.nombreFauxPositifs,
-    required this.nombreCiblesRatees,
-    required this.tempsTotalMs,
-    required this.abandonnee,
-    required this.taps,
-  });
-
-  Map<String, dynamic> versJson() => <String, dynamic>{
-    'emotion_cible': emotionCible,
-    'nombre_visages_planche': nombreVisagesPlanche,
-    'nombre_cibles_presentes': nombreCiblesPresentes,
-    'nombre_cibles_trouvees': nombreCiblesTrouvees,
-    'nombre_faux_positifs': nombreFauxPositifs,
-    'nombre_cibles_ratees': nombreCiblesRatees,
-    'temps_total_ms': tempsTotalMs,
-    'abandonnee': abandonnee,
-    'taps': taps.map((tap) => tap.versJson()).toList(),
-  };
+int calculerScore({required int T, required int R, required int F}) {
+  if (T + R == 0) {
+    return 0;
+  }
+  final brut = (T / (T + R)) * 100.0 - F * penaliteFauxPositif;
+  final borne = brut.clamp(0.0, 100.0);
+  return borne.round();
 }
 
-class Tap {
-  final int tempsMs;
-  final double x;
-  final double y;
-  final String resultat;
-
-  const Tap({
-    required this.tempsMs,
-    required this.x,
-    required this.y,
-    required this.resultat,
-  });
-
-  Map<String, dynamic> versJson() => <String, dynamic>{
-    'temps_ms': tempsMs,
-    'x': x,
-    'y': y,
-    'resultat': resultat,
-  };
+int calculerEtoiles(int score) {
+  if (score >= seuilTroisEtoiles) return 3;
+  if (score >= seuilDeuxEtoiles) return 2;
+  return 1;
 }

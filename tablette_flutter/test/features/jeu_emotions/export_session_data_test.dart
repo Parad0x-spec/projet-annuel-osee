@@ -13,9 +13,8 @@ Session _sessionTest() => Session(
   patientId: 'id-123',
   patientInitiales: 'MD',
   sessionDate: DateTime.utc(2026, 5, 25, 10, 0, 0),
-  jeuType: jeuTypeEmotions,
-  niveau: 3,
-  manches: const <Manche>[],
+  niveauDemande: 3,
+  parties: const <Partie>[],
 );
 
 void main() {
@@ -43,14 +42,14 @@ void main() {
         'session_date',
         'jeu_type',
         'niveau',
-        'manches',
+        'parties',
       ]);
       expect(payload['patient_id'], 'id-123');
       expect(payload['patient_initiales'], 'MD');
       expect(payload['session_date'], '2026-05-25T10:00:00.000Z');
       expect(payload['jeu_type'], 'emotions');
       expect(payload['niveau'], 3);
-      expect(payload['manches'], isEmpty);
+      expect(payload['parties'], isEmpty);
     });
 
     test('respecte l\'ordre canonique des cles dans le JSON serialise',
@@ -66,7 +65,7 @@ void main() {
       const payloadAttendu =
           '"payload":{"patient_id":"id-123","patient_initiales":"MD",'
           '"session_date":"2026-05-25T10:00:00.000Z","jeu_type":"emotions",'
-          '"niveau":3,"manches":[]}';
+          '"niveau":3,"parties":[]}';
       expect(enveloppeQr.enveloppeJSON, contains(payloadAttendu));
     });
 
