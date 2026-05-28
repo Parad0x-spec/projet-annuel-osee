@@ -14,6 +14,8 @@ Pour les vérifications en base SQLite décrites plus bas, prévoir un outil de 
 
 Penser également à vérifier visuellement, après installation de l'APK, que les quatre planches sont bien embarquées et accessibles, ce qui se voit indirectement à l'écran de configuration de partie où les quatre boutons « Planche 1 » à « Planche 4 » doivent être présents et que le lancement de chacune affiche bien la planche correspondante. Une planche absente du bundle se manifesterait par une zone vide ou un message d'erreur dans l'écran de jeu.
 
+Le bouton « Scanner QR tablette » de la fenêtre principale ouvre désormais une fenêtre de scan dédiée avec aperçu vidéo en direct de la webcam, et non plus une capture aveugle. Cette fenêtre se ferme automatiquement quand un QR est décodé, ou manuellement via le bouton « Annuler » ou la croix qui libèrent tous deux la caméra proprement.
+
 ## Séquence de test
 
 ### Étape 1 - Démarrage initial côté PC
@@ -40,9 +42,13 @@ Sur la tablette, depuis l'écran d'accueil, appuyer sur « Nouveau patient », c
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
-### Étape 5 - Scan du QR de retour par le PC
+### Étape 5 - Scan du QR de retour par le PC avec aperçu vidéo
 
-Sur le PC, cliquer sur « Scanner QR tablette ». La zone de statut doit afficher « Capture en cours... » pendant que la webcam capture l'écran de la tablette présentant le QR de retour. Présenter la tablette devant la webcam. Après lecture et vérification de la signature, le statut doit afficher « Appairage enregistre. ». Si la lecture échoue, ajuster la distance, l'angle et l'éclairage, puis relancer le scan.
+Sur le PC, cliquer sur « Scanner QR tablette ». Une fenêtre dédiée intitulée « Scan du QR tablette » doit s'ouvrir et un aperçu vidéo en direct de la webcam doit apparaître au centre, après une latence de quelques secondes le temps que la caméra s'ouvre. Si l'aperçu reste gris alors que la webcam est branchée, ou si le message « Aucune caméra détectée. Vérifiez le branchement. » apparaît, vérifier que la webcam n'est pas utilisée par un autre logiciel puis fermer et réessayer.
+
+Présenter la tablette affichant le QR de retour devant la webcam, en s'aidant de l'aperçu vidéo pour cadrer le QR au centre de l'image et ajuster la distance jusqu'à ce que le QR soit net et bien visible. Le décodage est automatique : dès que le QR est lisible, la fenêtre de scan se ferme et le statut de la fenêtre principale affiche « Appairage enregistre. ».
+
+Tester aussi la sortie sans QR détecté : ouvrir la fenêtre de scan, présenter une image quelconque sans QR pendant quelques secondes, puis appuyer sur le bouton « Annuler ». La fenêtre doit se fermer immédiatement et la caméra doit être libérée, ce qui se vérifie en regardant la LED de la webcam si elle en a une, ou en réouvrant la fenêtre de scan tout de suite après pour confirmer qu'elle peut rouvrir la caméra sans erreur. Refaire le même test avec fermeture par la croix de la fenêtre au lieu du bouton « Annuler », le comportement doit être identique.
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
@@ -130,9 +136,11 @@ Appuyer sur « Générer le QR de séance ». L'écran « Export de la séance �
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
-### Étape 20 - Scan du QR de séance par le PC et insertion en base
+### Étape 20 - Scan du QR de séance par le PC avec aperçu vidéo
 
-Sur le PC, cliquer sur « Scanner QR tablette » et présenter l'écran d'export de la tablette devant la webcam. Comme le QR est plus dense qu'à la tâche 11, ajuster si nécessaire la distance et la mise au point. Le statut doit afficher « Capture en cours... » puis, après lecture, vérification de la signature avec la `tab_pub` rechargée à l'étape 7 et insertion en base, le message « Session recue pour patient MD - niveau 3 ». La réussite de cette vérification de signature après le redémarrage de l'étape 7 valide le rechargement de l'appairage depuis SQLite, comme à la version précédente du test.
+Sur le PC, cliquer sur « Scanner QR tablette ». La fenêtre dédiée « Scan du QR tablette » doit s'ouvrir avec l'aperçu vidéo en direct, comme à l'étape 5. Présenter l'écran d'export de la tablette devant la webcam en s'aidant de l'aperçu pour cadrer correctement. Comme le QR de session est plus dense que celui d'appairage parce qu'il porte la liste agrégée des parties jouées, ajuster la distance et la mise au point en privilégiant un cadrage plus large où l'intégralité du QR est visible avec une bonne netteté. La présence de l'aperçu vidéo facilite ce cadrage, qui aurait été impossible à régler à l'aveugle dans la version précédente.
+
+Dès que le QR est décodé avec succès, la fenêtre de scan se ferme automatiquement et le statut de la fenêtre principale affiche, après vérification de la signature avec la `tab_pub` rechargée à l'étape 7 et insertion en base, le message « Session recue pour patient MD - niveau 3 ». La réussite de cette vérification de signature après le redémarrage de l'étape 7 valide le rechargement de l'appairage depuis SQLite, comme à la version précédente du test.
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
