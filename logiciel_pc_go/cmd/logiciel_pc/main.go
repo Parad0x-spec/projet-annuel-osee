@@ -66,13 +66,13 @@ func main() {
 	})
 
 	boutonScanner := widget.NewButton("Scanner QR tablette", func() {
-		statut.SetText("Capture en cours...")
-		go func() {
-			message := scannerEtVerifier(session, depotAppairage, depotSessions)
+		statut.SetText("Fenetre de scan ouverte.")
+		ouvrirFenetreScan(logiciel, func(chargeUtile string) {
+			message := verifierChargeUtileScannee(session, depotAppairage, depotSessions, chargeUtile)
 			fyne.Do(func() {
 				statut.SetText(message)
 			})
-		}()
+		})
 	})
 
 	entete := widget.NewLabelWithStyle(

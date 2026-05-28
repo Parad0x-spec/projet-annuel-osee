@@ -21,7 +21,7 @@ import (
 const (
 	titreFenetreQR   = "QR d'appairage PC"
 	tailleQRAffichee = float32(500)
-	delaiCaptureMax  = 10 * time.Second
+	delaiTraitement  = 10 * time.Second
 )
 
 func ouvrirFenetreQR(logiciel fyne.App, session *sessionAppairage) error {
@@ -51,24 +51,19 @@ func ouvrirFenetreQR(logiciel fyne.App, session *sessionAppairage) error {
 	return nil
 }
 
-func scannerEtVerifier(session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage, depotSessions *sessions.DepotSessions) string {
-	ctx, annuler := context.WithTimeout(context.Background(), delaiCaptureMax)
-	defer annuler()
-
-	frame, err := qr.CapturerFrame(ctx)
-	if err != nil {
-		return messageErreurCapture(err)
-	}
-
-	chargeUtile, err := decoderImageQR(frame)
-	if err != nil {
-		return "QR illisible. Reessayez."
-	}
-
+func verifierChargeUtileScannee(
+	session *sessionAppairage,
+	depotAppairage *appairage_pc.DepotAppairage,
+	depotSessions *sessions.DepotSessions,
+	chargeUtile string,
+) string {
 	enveloppe, err := qr.LireChargeUtileQR(chargeUtile)
 	if err != nil {
 		return messageErreurVerification(err)
 	}
+
+	ctx, annuler := context.WithTimeout(context.Background(), delaiTraitement)
+	defer annuler()
 
 	switch enveloppe.Type {
 	case qr.TypeAppairageTablette:
@@ -128,17 +123,6 @@ func traiterSession(ctx context.Context, session *sessionAppairage, depotAppaira
 	}
 
 	return fmt.Sprintf("Session recue pour patient %s - niveau %d", payload.PatientInitiales, payload.Niveau)
-}
-
-func messageErreurCapture(err error) string {
-	switch {
-	case errors.Is(err, qr.ErrCameraIndisponible):
-		return "Aucune camera detectee. Verifiez le branchement et reessayez."
-	case errors.Is(err, qr.ErrCaptureEchouee):
-		return "La capture a echoue. Reessayez."
-	default:
-		return "La capture a echoue. Reessayez."
-	}
 }
 
 func messageErreurVerification(err error) string {
