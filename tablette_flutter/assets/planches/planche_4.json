@@ -1,0 +1,181 @@
+{
+  "planche": "IMG-20260526-WA0013.jpg",
+  "largeur": 1536,
+  "hauteur": 892,
+  "personnages": [
+    {
+      "x": 569,
+      "y": 591,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 196,
+      "y": 307,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 118,
+      "y": 326,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 745,
+      "y": 195,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 678,
+      "y": 281,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 1065,
+      "y": 173,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 1241,
+      "y": 256,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 1060,
+      "y": 366,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 829,
+      "y": 581,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 682,
+      "y": 524,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 117,
+      "y": 460,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 858,
+      "y": 284,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1433,
+      "y": 401,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1368,
+      "y": 242,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 532,
+      "y": 379,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 405,
+      "y": 261,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 277,
+      "y": 420,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 393,
+      "y": 548,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1084,
+      "y": 646,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1317,
+      "y": 762,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1388,
+      "y": 569,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1350,
+      "y": 373,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 444,
+      "y": 398,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 313,
+      "y": 702,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 256,
+      "y": 681,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 100,
+      "y": 756,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 764,
+      "y": 403,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 866,
+      "y": 423,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 1218,
+      "y": 449,
+      "rayon": 30,
+      "emotion": "peur"
+    }
+  ]
+}

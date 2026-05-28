@@ -1,0 +1,325 @@
+{
+  "planche": "IMG-20260525-WA0000.jpg",
+  "largeur": 1536,
+  "hauteur": 912,
+  "personnages": [
+    {
+      "x": 265,
+      "y": 195,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 349,
+      "y": 235,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 419,
+      "y": 152,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 539,
+      "y": 190,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 614,
+      "y": 259,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 691,
+      "y": 248,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 770,
+      "y": 218,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 842,
+      "y": 234,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 1107,
+      "y": 154,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 548,
+      "y": 574,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 440,
+      "y": 670,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 232,
+      "y": 745,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 288,
+      "y": 738,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 543,
+      "y": 411,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 906,
+      "y": 600,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 969,
+      "y": 781,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 1433,
+      "y": 611,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 1389,
+      "y": 578,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 1376,
+      "y": 394,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 214,
+      "y": 411,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 308,
+      "y": 396,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 386,
+      "y": 401,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 1290,
+      "y": 538,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 1029,
+      "y": 405,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 1079,
+      "y": 277,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 454,
+      "y": 304,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 91,
+      "y": 584,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 77,
+      "y": 429,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 151,
+      "y": 94,
+      "rayon": 30,
+      "emotion": "colere"
+    },
+    {
+      "x": 833,
+      "y": 434,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 752,
+      "y": 612,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 654,
+      "y": 597,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 294,
+      "y": 620,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 609,
+      "y": 780,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1023,
+      "y": 586,
+      "rayon": 30,
+      "emotion": "tristesse"
+    },
+    {
+      "x": 908,
+      "y": 385,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 709,
+      "y": 418,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 924,
+      "y": 254,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 994,
+      "y": 184,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1061,
+      "y": 151,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 947,
+      "y": 137,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1205,
+      "y": 258,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1472,
+      "y": 342,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1473,
+      "y": 511,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1435,
+      "y": 765,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1210,
+      "y": 646,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 874,
+      "y": 725,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1156,
+      "y": 441,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1241,
+      "y": 363,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 1394,
+      "y": 233,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 1307,
+      "y": 256,
+      "rayon": 30,
+      "emotion": "joie"
+    },
+    {
+      "x": 364,
+      "y": 651,
+      "rayon": 30,
+      "emotion": "peur"
+    },
+    {
+      "x": 150,
+      "y": 254,
+      "rayon": 30,
+      "emotion": "tristesse"
+    }
+  ]
+}
