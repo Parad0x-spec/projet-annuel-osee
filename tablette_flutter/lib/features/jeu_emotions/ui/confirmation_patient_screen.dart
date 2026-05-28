@@ -55,7 +55,7 @@ class ConfirmationPatientScreen extends ConsumerWidget {
           width: _largeurBoutonTactile,
           height: _hauteurBoutonTactile,
           child: ElevatedButton(
-            onPressed: () => context.go('/jeu'),
+            onPressed: () => context.go('/configuration-partie'),
             child: const Text(
               Textes.boutonCommencerJeu,
               style: TextStyle(fontSize: 22),

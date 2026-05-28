@@ -47,14 +47,16 @@ void main() {
   );
 
   testWidgets(
-    'Commencer le jeu route vers le placeholder /jeu',
+    'Commencer le jeu route vers la configuration de partie',
     (WidgetTester tester) async {
       await _monterConfirmation(tester);
 
       await tester.tap(find.text(Textes.boutonCommencerJeu));
       await tester.pumpAndSettle();
 
-      expect(find.text(Textes.messageJeuPlaceholder), findsOneWidget);
+      expect(find.text(Textes.titreConfigurationPartie), findsOneWidget);
+      expect(find.text(Textes.consignePlanche), findsOneWidget);
+      expect(find.text(Textes.consigneEmotion), findsOneWidget);
     },
   );
 

@@ -22,12 +22,6 @@ class Textes {
       'Faites scanner ce QR au praticien depuis son PC.';
   static const String boutonAppairageTermine = 'J\'ai terminé';
 
-  static const String titreJeuPlaceholder = 'Jeu';
-  static const String messageJeuPlaceholder =
-      'Mode test infrastructure : permet de valider la boucle PC ↔ tablette '
-      'avant l\'implémentation du jeu.';
-  static const String boutonExporterSessionTest = 'Exporter session de test';
-
   static const String titreExportSession = 'Export de la séance';
   static const String consigneExportSession =
       'Faites scanner ce QR au praticien.';
@@ -52,4 +46,65 @@ class Textes {
   static const String erreurQrIllisible = 'QR illisible, réessayez.';
   static const String erreurDonneesPatientInvalides =
       'Données patient invalides.';
+
+  static const String titreConfigurationPartie = 'Configuration de la partie';
+  static const String consignePlanche = 'Choisissez la planche';
+  static const String consigneEmotion = 'Choisissez l\'émotion à chercher';
+  static String libellePlanche(int numero) => 'Planche $numero';
+  static const String emotionJoieLibelle = 'Joie';
+  static const String emotionColereLibelle = 'Colère';
+  static const String emotionTristesseLibelle = 'Tristesse';
+  static const String emotionPeurLibelle = 'Peur';
+  static const String boutonLancerPartie = 'Lancer la partie';
+  static const String erreurChargementPlanche =
+      'Impossible de charger la planche.';
+
+  static const String titreJeu = 'Partie en cours';
+  static String consigneTrouverEmotion(String emotionLibelle) =>
+      'Trouve tous les enfants ${emotionLibelle.toLowerCase()}';
+  static const String boutonJaiFini = 'J\'ai fini';
+  static const String boutonArreter = 'Arrêter';
+  static const String titreConfirmationArret = 'Arrêter la partie ?';
+  static const String messageConfirmationArret =
+      'La partie sera comptée comme abandonnée.';
+  static const String boutonConfirmerArret = 'Oui, arrêter';
+  static const String boutonAnnulerArret = 'Continuer';
+
+  static const String titreTransitionPartie = 'Résultat de la partie';
+  static const String messageEncouragementUneEtoile =
+      'Bien essayé ! Continue, tu progresses.';
+  static const String messageEncouragementDeuxEtoiles =
+      'Bon travail, tu y es presque !';
+  static const String messageEncouragementTroisEtoiles =
+      'Bravo, c\'est excellent !';
+  static const String boutonNouvellePartie = 'Nouvelle partie';
+  static const String boutonTerminerSeance = 'Terminer la séance';
+
+  static const String titreRecapitulatifSeance = 'Récapitulatif de la séance';
+  static const String messageAucunePartieJouee =
+      'Aucune partie jouée durant cette séance.';
+  static String partieResume({
+    required int numero,
+    required int numeroPlanche,
+    required String emotionLibelle,
+    required int score,
+  }) =>
+      'Partie $numero — Planche $numeroPlanche, ${emotionLibelle.toLowerCase()} — score $score / 100';
+  static const String boutonGenererQrSession = 'Générer le QR de séance';
+  static const String boutonQuitterSansTransferer = 'Quitter sans transférer';
+
+  static String libelleEmotion(String emotion) {
+    switch (emotion) {
+      case 'joie':
+        return emotionJoieLibelle;
+      case 'colere':
+        return emotionColereLibelle;
+      case 'tristesse':
+        return emotionTristesseLibelle;
+      case 'peur':
+        return emotionPeurLibelle;
+      default:
+        return emotion;
+    }
+  }
 }

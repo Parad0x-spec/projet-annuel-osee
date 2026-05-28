@@ -219,7 +219,7 @@ class ControleurPartie extends Notifier<EtatPartie> {
     required String emotion,
   }) async {
     final planche = await chargerPlanche(numeroPlanche);
-    state = PartieEnCours(
+    chargerMoteur(
       MoteurPartie(
         planche: planche,
         numeroPlanche: numeroPlanche,
@@ -227,6 +227,10 @@ class ControleurPartie extends Notifier<EtatPartie> {
         horlogeMs: () => horloge().millisecondsSinceEpoch,
       ),
     );
+  }
+
+  void chargerMoteur(MoteurPartie moteur) {
+    state = PartieEnCours(moteur);
   }
 
   ResultatTap taper(int tapX, int tapY) {
