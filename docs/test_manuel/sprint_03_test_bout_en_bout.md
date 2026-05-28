@@ -12,6 +12,8 @@ Avant de lancer la séquence, vérifier que les éléments suivants sont en plac
 
 Pour les vérifications en base SQLite décrites plus bas, prévoir un outil de lecture de la base sur le PC Windows, par exemple DB Browser for SQLite, ou l'exécutable `sqlite3.exe` en ligne de commande. La base à ouvrir est `%USERPROFILE%\.projet_annuel\patients.db`, fichier unique qui contient les trois tables `patients`, `appairage` et `sessions`.
 
+Penser également à vérifier visuellement, après installation de l'APK, que les quatre planches sont bien embarquées et accessibles, ce qui se voit indirectement à l'écran de configuration de partie où les quatre boutons « Planche 1 » à « Planche 4 » doivent être présents et que le lancement de chacune affiche bien la planche correspondante. Une planche absente du bundle se manifesterait par une zone vide ou un message d'erreur dans l'écran de jeu.
+
 ## Séquence de test
 
 ### Étape 1 - Démarrage initial côté PC
@@ -74,27 +76,69 @@ Sur la tablette, depuis l'écran d'accueil, appuyer de nouveau sur « Nouveau pa
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
-### Étape 11 - Passage au placeholder de jeu et déclenchement de l'export
+### Étape 11 - Accès à l'écran de configuration de partie
 
-Sur la tablette, appuyer sur « Commencer le jeu ». L'écran placeholder intitulé « Jeu » doit s'afficher avec le texte « Mode test infrastructure : permet de valider la boucle PC ↔ tablette avant l'implémentation du jeu. » et un bouton « Exporter session de test ». Appuyer sur ce bouton.
-
-- [ ] OK    - [ ] KO    - [ ] Non testable
-
-### Étape 12 - Génération et affichage du QR session côté tablette
-
-L'écran « Export de la séance » doit s'afficher, présentant le QR de session, la consigne « Faites scanner ce QR au praticien. », le sous-texte « Session pour MD » pour confirmation visuelle, et un bouton « Terminé, retourner à l'accueil ». Le QR de session encode le payload minimaliste de la tâche 11, avec le `patient_id` reçu, le niveau 3, le type de jeu `emotions` et un tableau de manches vide, signé par la tablette.
+Sur la tablette, depuis l'écran de confirmation patient, appuyer sur « Commencer le jeu ». L'écran intitulé « Configuration de la partie » doit s'afficher, présentant la consigne « Choisissez la planche » suivie de quatre boutons « Planche 1 » à « Planche 4 », puis la consigne « Choisissez l'émotion à chercher » suivie de quatre boutons « Joie », « Colère », « Tristesse » et « Peur », et en bas un bouton « Lancer la partie » initialement désactivé (grisé).
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
-### Étape 13 - Scan du QR session par le PC et insertion en base
+### Étape 12 - Choix d'une planche et d'une émotion et lancement
 
-Sur le PC, cliquer sur « Scanner QR tablette » et présenter l'écran d'export de la tablette devant la webcam. Le statut doit afficher « Capture en cours... » puis, après lecture, vérification de la signature avec la `tab_pub` rechargée à l'étape 7 et insertion en base, le message « Session recue pour patient MD - niveau 3 ». La réussite de cette vérification de signature après le redémarrage de l'étape 7 valide le rechargement de l'appairage depuis SQLite.
+Appuyer sur « Planche 1 », le bouton doit se colorer en bleu pour signaler la sélection. Appuyer sur « Joie », le bouton doit se colorer en orange. Le bouton « Lancer la partie » doit alors devenir actif. Appuyer dessus. La tablette doit charger la planche en mémoire et basculer vers l'écran intitulé « Partie en cours », avec en haut la consigne « Trouve tous les enfants joie » et en bas les boutons « Arrêter » et « J'ai fini ».
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
-### Étape 14 - Vérification finale de la session en base
+### Étape 13 - Vérification critique de la conversion des coordonnées de tap
 
-Ouvrir de nouveau `patients.db` avec l'outil SQLite et exécuter `SELECT s.id, p.initiales, s.jeu_type, s.niveau, s.session_date, s.date_reception FROM sessions s JOIN patients p ON p.patient_id = s.patient_id;`. La requête doit retourner une ligne dont les initiales sont MD, le `jeu_type` est `emotions` et le `niveau` est 3, ce qui confirme que la session reçue est bien rattachée au bon patient par le `patient_id`. Vérifier accessoirement que la colonne `payload_complet` de la table `sessions` contient le JSON brut du payload.
+C'est le point technique le plus sensible de l'implémentation. Sur la planche affichée, repérer visuellement un visage clairement joyeux (large sourire) parmi les enfants. Taper précisément sur ce visage. Le résultat attendu est qu'un cercle vert avec une coche apparaisse exactement centré sur le visage tapé, et reste affiché. Tester sur trois visages joyeux différents répartis dans la planche (un en haut, un au centre, un en bas) pour s'assurer que la précision est constante quel que soit l'endroit. Si le cercle vert apparaît décalé par rapport au visage, c'est le symptôme d'un bug de conversion de coordonnées à corriger. Tester également après avoir zoomé puis dézoomé et panné la planche dans l'InteractiveViewer, pour confirmer que la conversion reste correcte sous transformation.
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 14 - Comportement des feedbacks vert, rouge et neutre
+
+Taper sur un visage exprimant une autre émotion que joie (par exemple un visage en colère ou triste). Un cercle rouge avec une croix doit apparaître brièvement sur le visage tapé puis disparaître au bout d'environ une seconde. Taper ensuite dans une zone vide de la planche (un buisson, une zone de ciel, un coin sans personnage). Aucun feedback ne doit apparaître et rien ne doit changer dans les compteurs. Revérifier qu'un nouveau tap sur un visage joyeux affiche bien un cercle vert qui s'ajoute aux précédents sans les remplacer.
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 15 - Fin automatique de la partie
+
+Poursuivre les taps jusqu'à avoir trouvé tous les visages joyeux de la planche. Au moment où le dernier visage joyeux est tapé, la tablette doit basculer automatiquement vers l'écran de transition sans qu'il soit nécessaire d'appuyer sur « J'ai fini ». Le score doit refléter le ratio cibles trouvées sur cibles totales avec déduction des éventuels faux positifs accumulés.
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 16 - Écran de transition et étoiles
+
+L'écran intitulé « Résultat de la partie » doit afficher en haut une rangée de trois étoiles dont une à trois sont remplies en jaune selon le score (les autres en contour), suivie d'un message d'encouragement neutre. Deux boutons en bas proposent « Terminer la séance » et « Nouvelle partie ». Si la partie a été terminée sans faute ni cible ratée, trois étoiles pleines doivent être affichées.
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 17 - Enchaînement d'une seconde partie avec autre planche et émotion
+
+Appuyer sur « Nouvelle partie » pour revenir à l'écran de configuration. Choisir cette fois « Planche 2 » et « Colère », puis lancer. Jouer la partie en mode plus rapide, par exemple en tapant seulement deux ou trois visages en colère puis en appuyant sur « J'ai fini ». L'écran de transition doit s'afficher avec un score correspondant à un nombre partiel de cibles trouvées, et donc probablement une ou deux étoiles. Cela valide que deux parties peuvent s'enchaîner dans la même séance.
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 18 - Terminer la séance et récapitulatif
+
+Sur l'écran de transition de la seconde partie, appuyer sur « Terminer la séance ». L'écran intitulé « Récapitulatif de la séance » doit s'afficher, listant les deux parties jouées dans leur ordre, par exemple « Partie 1 — Planche 1, joie — score 100 / 100 » et « Partie 2 — Planche 2, colère — score 50 / 100 ». En bas, un bouton « Quitter sans transférer » et un bouton « Générer le QR de séance ».
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 19 - Génération et affichage du QR de séance
+
+Appuyer sur « Générer le QR de séance ». L'écran « Export de la séance » doit s'afficher avec le QR encodant le payload signé. Le payload contient maintenant la liste agrégée des deux parties jouées (et non plus une liste vide comme à la tâche 11), donc le QR est sensiblement plus dense qu'avant. Vérifier que le QR reste bien lisible visuellement et que la consigne « Faites scanner ce QR au praticien. » apparaît correctement avec le sous-texte « Session pour MD ».
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 20 - Scan du QR de séance par le PC et insertion en base
+
+Sur le PC, cliquer sur « Scanner QR tablette » et présenter l'écran d'export de la tablette devant la webcam. Comme le QR est plus dense qu'à la tâche 11, ajuster si nécessaire la distance et la mise au point. Le statut doit afficher « Capture en cours... » puis, après lecture, vérification de la signature avec la `tab_pub` rechargée à l'étape 7 et insertion en base, le message « Session recue pour patient MD - niveau 3 ». La réussite de cette vérification de signature après le redémarrage de l'étape 7 valide le rechargement de l'appairage depuis SQLite, comme à la version précédente du test.
+
+- [ ] OK    - [ ] KO    - [ ] Non testable
+
+### Étape 21 - Vérification finale de la séance et des parties en base
+
+Ouvrir de nouveau `patients.db` avec l'outil SQLite et exécuter `SELECT s.id, p.initiales, s.jeu_type, s.niveau, s.session_date, s.date_reception FROM sessions s JOIN patients p ON p.patient_id = s.patient_id;`. La requête doit retourner une ligne dont les initiales sont MD, le `jeu_type` est `emotions` et le `niveau` est 3, ce qui confirme que la session reçue est bien rattachée au bon patient. Vérifier ensuite que la colonne `payload_complet` de la table `sessions` contient le JSON brut du payload, et que ce JSON inclut une clé `parties` qui est une liste de deux objets correspondant aux deux parties jouées, chacun avec son `emotion_cible`, son `numero_planche`, son `score`, son `mode_fin` et les compteurs `nb_cibles_total`, `nb_cibles_trouvees`, `nb_faux_positifs`, `nb_cibles_ratees`. Les valeurs doivent correspondre à ce qui a été observé pendant les parties (planche 1 joie score élevé, planche 2 colère score partiel).
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
@@ -106,9 +150,9 @@ Ce cas vérifie le garde-fou côté PC lorsqu'aucun appairage n'a été établi.
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
-### Cas B - Export d'une session sans patient chargé côté tablette
+### Cas B - Accès aux écrans du jeu sans patient chargé côté tablette
 
-Ce cas vérifie le garde-fou côté tablette. Dans la cinématique normale, l'écran d'export n'est atteignable qu'après le chargement d'un patient via un QR `creation_patient`, puisque l'accès au placeholder de jeu passe par l'écran de confirmation patient. Atteindre l'écran d'export sans patient chargé n'est donc pas censé être possible par les chemins de navigation prévus. Si une manipulation permet malgré tout d'y parvenir, l'écran d'export doit afficher le message « Aucun patient chargé. » plutôt que de générer un QR. Ce garde-fou est par ailleurs couvert par les tests automatisés de la tâche 11, donc ce cas peut être marqué Non testable s'il n'existe aucun chemin manuel pour l'atteindre.
+Ce cas vérifie le garde-fou côté tablette. Dans la cinématique normale, les écrans de configuration de partie, de jeu, de transition, de récapitulatif et d'export ne sont atteignables qu'après le chargement d'un patient via un QR `creation_patient`, puisque le bouton « Commencer le jeu » de l'écran de confirmation patient est la seule porte d'entrée. Atteindre l'un de ces écrans sans patient chargé n'est donc pas censé être possible par les chemins de navigation prévus. Si une manipulation permet malgré tout d'y parvenir, les écrans concernés doivent afficher le message « Aucun patient chargé. » plutôt que de tenter de charger une planche ou de générer un QR. Ce garde-fou est par ailleurs couvert par les tests automatisés de la partie B, donc ce cas peut être marqué Non testable s'il n'existe aucun chemin manuel pour l'atteindre.
 
 - [ ] OK    - [ ] KO    - [ ] Non testable
 
