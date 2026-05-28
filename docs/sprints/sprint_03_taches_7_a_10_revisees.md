@@ -1,97 +1,81 @@
-# Sprint 3 - Tâches 7 a 10 revisitees suite a l'ADR-08
+# Sprint 3 - Taches 7 a 10 revisitees suite a l'ADR-08
 
 ## Objet
 
-Ce document acte la revision des taches 7 a 10 du sprint 3 suite a la decision tracee dans l'ADR-08 de passer aux planches scenes pre-dessinees. Il succede aux specifications correspondantes du plan general docs/sprints/sprint_03.md, qui restent valides pour les autres taches du sprint mais sont ici remplacees pour les taches du jeu.
+Ce document acte la revision des taches 7 a 10 du sprint 3 suite a la decision tracee dans l'ADR-08 de passer aux planches scenes pre-dessinees. Il reflete le modele definitif : quatre planches de niveau equivalent, quatre emotions (joie, colere, tristesse, peur), choix de la planche et de l'emotion par le praticien sur la tablette, accumulation de parties dans une seance et transfert groupe par un seul QR agrege en fin de seance.
 
-## Tache 7 revisitee - Production et annotation des trois planches
+Il succede aux specifications correspondantes du plan general docs/sprints/sprint_03.md, qui restent valides pour les autres taches du sprint mais sont ici remplacees pour les taches du jeu.
 
-La tache 7 initiale prevoyait la constitution d'une banque de visages individuels Open Peeps. Elle est remplacee par la production des trois planches scenes complete et de leurs annotations.
+## Tache 7 - Production et annotation des planches : faite
 
-Cette tache est realisee par le developpeur hors session de Claude Code, en deux phases.
+La tache 7 initiale prevoyait une banque de visages individuels. Elle est remplacee par la production de quatre planches scenes et de leurs annotations, et elle est deja realisee.
 
-Phase un, production des planches. Generer les trois planches via ChatGPT en utilisant le prompt initial pour le niveau 1 et des variantes ajustees pour les niveaux 2 et 3. Chaque planche est revue pour s'assurer que les expressions des personnages sont lisibles et que la repartition des emotions est equilibree. Une planche refusee ou de qualite insuffisante est regenerée avec des ajustements de prompt. Les trois planches sont sauvegardees au format PNG dans un dossier de travail.
+Les quatre planches ont ete generees via ChatGPT et annotees manuellement avec l'outil HTML livre dans outils/annotateur_planche.html. Elles sont presentes dans tablette_flutter/assets/planches/ sous les noms planche_1.jpg a planche_4.jpg, chacune accompagnee de son fichier d'annotation planche_1.json a planche_4.json.
 
-Phase deux, annotation des planches. Utiliser l'outil annotateur_planche.html livre dans outils/ pour ouvrir chaque planche et marquer les personnages. Pour chaque visage, cliquer dessus, choisir l'emotion dans le menu, ajuster eventuellement le rayon de la zone cliquable. Une fois toutes les annotations posees, exporter le JSON. Repeter pour les trois planches.
+Les comptages observes confirment que chaque planche contient les quatre emotions en quantite suffisante pour qu'une consigne sur n'importe quelle emotion ait des cibles a trouver. La combinaison la plus maigre est la tristesse sur la planche 2 avec trois cibles, ce qui reste jouable.
 
-Les six fichiers resultant (trois images PNG et trois fichiers JSON) sont copies dans tablette_flutter/assets/planches/ avec les noms planche_1.png et planche_1.json pour le niveau 1, planche_2.png et planche_2.json pour le niveau 2, planche_3.png et planche_3.json pour le niveau 3.
+Le pubspec.yaml de la tablette doit etre mis a jour pour declarer ces assets si ce n'est pas deja fait. Le commit correspondant ajoute les huit fichiers au depot.
 
-Le pubspec.yaml de la tablette est mis a jour pour declarer ces assets.
+## Tache 8 - Logique metier du jeu
 
-Cette tache ne fait pas l'objet d'un commit unique, elle se materialise par un commit "tablette: ajouter banque de planches du jeu des emotions" qui ajoute les six fichiers au repo.
+La tache 8 initiale prevoyait la composition pseudo-aleatoire de planches. Elle devient le chargement et l'exploitation de planches pre-dessinees, avec gestion d'une partie et accumulation des parties dans une seance.
 
-## Tache 8 revisitee - Logique metier du jeu
+Code a livrer dans tablette_flutter/lib/features/jeu_emotions/.
 
-La tache 8 initiale prevoyait la composition pseudo-aleatoire de planches a la volee. Elle devient le chargement et l'exploitation de planches pre-dessinees.
+Dans domain.dart, les types : Planche (chemin asset, largeur, hauteur, liste de PersonnageAnnotation), PersonnageAnnotation (x, y, rayon, emotion), une constante des emotions valides (joie, colere, tristesse, peur), une fonction estDansZone pour la detection de tap par distance euclidienne, un type Partie agregant le resultat d'une partie jouee (emotion cible, numero de planche, nombres de cibles totales, trouvees, ratees, faux positifs, temps total, mode de fin, score), l'adaptation du type Session pour contenir une liste de Partie, et un type Tap pour la collecte memoire non transmise.
 
-Code a livrer dans tablette_flutter/lib/features/jeu_emotions/ :
+Dans data.dart, une fonction de chargement de planche par numero qui lit l'image et parse le JSON via rootBundle, valide les emotions et la coherence des coordonnees, et leve une exception en cas de probleme. La fonction ignore le champ planche du JSON et localise l'image par le numero. L'adaptation de la construction du payload session pour serialiser la liste de Partie en JSON canonique, le reste de la chaine de signature et d'encodage etant deja en place.
 
-Dans domain.dart, etendre les types deja en place avec un type Planche qui contient le chemin de l'image asset, la largeur et hauteur en pixels, et une liste de PersonnageAnnotation (chaque PersonnageAnnotation contient x, y, rayon, emotion). Ajouter une fonction utilitaire estDansZone(tapX, tapY, personnage) qui retourne vrai si les coordonnees du tap tombent dans le cercle defini par les coordonnees et le rayon du personnage.
+Dans controller.dart, l'etat de partie en cours et l'etat de seance, les fonctions de demarrage de partie, de traitement d'un tap, de fin de partie avec calcul de score, et l'adaptation de la fonction d'export pour utiliser la liste reelle de parties. Le calcul de score suit la formule de la spec, borne entre zero et cent, avec gestion du cas ou il n'y a aucune cible.
 
-Dans data.dart, ajouter une fonction chargerPlanchePourNiveau(niveau) qui retourne un Future<Planche> en lisant l'image asset correspondante et en parsant le JSON d'annotation associe. La fonction valide que toutes les emotions du JSON sont des emotions reconnues par le jeu, et que les coordonnees sont coherentes avec la taille de l'image.
+Une variable de configuration centralisee pour le facteur de penalite des faux positifs et les seuils des etoiles, afin d'ajuster ces parametres sans toucher au code metier.
 
-Dans controller.dart, ajouter les providers Riverpod necessaires : un PlancheCouranteProvider qui charge la planche selon le niveau courant, un ManchesCouranteProvider qui gere l'etat de la manche en cours (consigne actuelle, cibles trouvees, faux positifs, temps de debut), et une fonction taper(tapX, tapY) qui prend les coordonnees d'un tap, identifie si un personnage est touche, et met a jour l'etat selon l'emotion.
-
-Implementer la fonction de calcul de score selon la formule de la spec : score = (T / (T + R)) * 100 - F * 5, borne entre zero et cent.
-
-Tests unitaires obligatoires sur le parsing du JSON, la detection de tap, le calcul de score, et la logique de fin de manche.
+Tests unitaires sur le parsing, la detection de tap, le calcul de score, la fin de partie et la detection de fin automatique.
 
 Commit propose : "tablette: implementer logique metier du jeu des emotions".
 
-## Tache 9 reconfirmee - Application stricte du niveau_demande
+## Tache 9 - Application du niveau_demande : reduite
 
-La tache 9 telle que revisee suite a l'option (c) sur l'adaptation reste valide. Pas de changement de specification suite a l'ADR-08, car cette tache concerne la lecture du niveau_demande dans le payload creation_patient et son application au demarrage du jeu, ce qui est independant du modele de planche.
+La tache 9 concernait l'application stricte du niveau_demande recu du PC. Dans le modele definitif, le choix se fait sur la tablette et le niveau_demande n'a plus d'effet sur le gameplay. Il est simplement conserve dans les donnees de seance comme intention du praticien.
 
-A noter cependant que la fonction chargerPlanchePourNiveau livree a la tache 8 utilise le niveau_demande pour choisir parmi planche_1, planche_2 ou planche_3.
+Cette tache se reduit donc a s'assurer que le niveau_demande recu dans le message creation_patient est bien stocke et inclus dans la Session exportee, sans logique d'adaptation. C'est essentiellement deja couvert par les taches precedentes.
 
-## Tache 10 revisitee - Interface graphique du jeu
+## Tache 10 - Interface graphique du jeu
 
-La tache 10 initiale prevoyait une grille pseudo-aleatoire de cellules contenant des visages. Elle devient un canvas scrollable affichant une planche statique avec detection des taps.
+La tache 10 initiale prevoyait une grille pseudo-aleatoire. Elle devient un canvas affichant une planche statique avec detection des taps, plus les ecrans de configuration, de transition et de recapitulatif.
 
-Code a livrer dans tablette_flutter/lib/features/jeu_emotions/ui/ :
+Code a livrer dans tablette_flutter/lib/features/jeu_emotions/ui/.
 
-L'ecran principal JeuEmotionsScreen affiche en haut la consigne et la progression (manche x sur y), au centre la planche dans un widget InteractiveViewer ou GestureDetector imbrique selon le besoin de scroll, et en bas les deux boutons "J'ai fini" et "Arreter la session".
+L'ecran de configuration de partie, destine au praticien, permet de choisir une planche parmi les quatre et une emotion parmi les quatre, puis de lancer la partie.
 
-La planche est affichee dans un widget Stack qui superpose l'image et les indicateurs de feedback. Au moment d'un tap, l'application calcule les coordonnees du tap dans le referentiel de l'image (en tenant compte du facteur d'echelle d'affichage et du scroll eventuel), appelle la fonction taper du controller, et selon le retour ajoute soit un PositionedFeedback vert persistant soit un PositionedFeedback rouge transitoire au-dessus de la planche.
+L'ecran principal du jeu affiche la consigne en haut, la planche au centre dans un widget permettant le zoom et le scroll, et deux boutons en bas pour terminer ou arreter. La detection des taps convertit les coordonnees du referentiel widget vers le referentiel image en tenant compte du facteur d'echelle et du scroll. Selon le resultat, un feedback vert persistant ou rouge transitoire est superpose a la planche.
 
-L'ecran de transition entre manches affiche le score en etoiles et le message d'encouragement, avec un timer de trois secondes ou un bouton "Suivant".
+L'ecran de transition de fin de partie affiche le score en etoiles et un message d'encouragement, avec une option pour lancer une nouvelle partie et une option pour terminer la seance.
 
-L'ecran recapitulatif de fin de session reprend l'export deja en place a la tache 11 mais avec maintenant des donnees reelles de session a la place du payload minimaliste.
+L'ecran recapitulatif de fin de seance liste les parties jouees et permet de generer le QR de session avec les donnees reelles, ou de quitter sans transferer.
 
-Les retours sonores et haptiques sont implementes avec les paquets audioplayers et vibration deja en place ou a ajouter (a verifier dans le pubspec actuel).
+Les retours sonores et haptiques sont ajoutes si les paquets sont disponibles, sinon notes comme amelioration.
 
-Tests de widget sur l'affichage de la planche, la reaction aux taps avec coordonnees simulees, l'enchainement des manches.
+Tests de widget sur les quatre ecrans.
 
 Commit propose : "tablette: implementer interface graphique du jeu des emotions".
 
+## Point technique sensible : conversion des coordonnees
+
+Le point le plus delicat de la tache 10 est la conversion des coordonnees d'un tap depuis le referentiel de l'ecran vers le referentiel de l'image de la planche, en tenant compte du zoom et du defilement. Si un widget de type InteractiveViewer est utilise, sa matrice de transformation doit etre exploitee pour cette conversion. Une alternative est un defilement bidirectionnel avec calcul manuel de l'offset. Cette conversion doit etre soigneusement testee car une erreur decalerait toutes les zones cliquables.
+
 ## Ordre d'execution recommande
 
-L'ordre recommande pour les taches 7 a 10 est le suivant.
+La tache 7 etant faite, l'ordre est : tache 8 (logique metier, testable sans UI), puis tache 10 (UI s'appuyant sur la logique), la tache 9 etant integree au passage. Enfin la tache 13 (test interactif sur materiel reel) valide l'ensemble.
 
-D'abord la tache 7 (production des planches), puisque sans planches on ne peut pas tester les taches 8 et 10. La production peut etre faite en parallele d'autres taches non bloquantes si necessaire.
-
-Ensuite la tache 8 (logique metier sans UI), qui peut etre developpee et testee avec une planche fictive si la tache 7 traine.
-
-Ensuite la tache 10 (UI), qui s'appuie sur la tache 8.
-
-Ensuite la tache 9 (application du niveau), qui peut etre integree en parallele de la tache 10.
-
-Enfin la tache 13 (test interactif) qui s'appuie sur tout ce qui precede.
-
-## Critères d'acceptation revisités
+## Criteres d'acceptation
 
 Le jeu est valide quand le scenario suivant fonctionne sur la Lenovo Tab P12 reelle.
 
-Apres scan d'un QR creation_patient avec niveau 1, l'ecran de jeu affiche la planche 1, la consigne "Trouve les enfants joyeux" et la barre de progression "Manche 1 sur 5". Le patient peut taper sur des personnages joyeux et voir des points verts persistants apparaitre. Un tap sur un personnage triste fait apparaitre un point rouge qui s'efface en une seconde. Quand tous les personnages joyeux sont trouves, ou apres clic sur "J'ai fini", l'ecran de transition affiche le score en etoiles. La manche suivante demarre avec une autre consigne. Apres cinq manches, l'ecran recapitulatif s'affiche avec le score global et permet de generer le QR de session. Ce QR est scanne par le PC qui insere une session reelle dans sa base, avec des manches non vides cette fois.
-
-Le meme scenario fonctionne aux niveaux 2 et 3 avec leurs planches respectives, et les emotions correspondantes sont presentes dans les consignes.
+Apres scan d'un QR creation_patient et confirmation du patient charge, le praticien accede a l'ecran de configuration, choisit une planche et une emotion, et lance la partie. La planche s'affiche avec la consigne correspondante. Le patient tape sur des personnages : un tap correct fait apparaitre un point vert persistant, un tap sur une autre emotion un point rouge transitoire, un tap dans le vide ne fait rien. Quand toutes les cibles sont trouvees, ou apres le bouton de fin, l'ecran de transition affiche le score en etoiles. Le praticien peut lancer une nouvelle partie avec une autre planche et une autre emotion, ou terminer la seance. A la fin, l'ecran recapitulatif liste les parties et genere un QR de session unique contenant toutes les parties. Ce QR est scanne par le PC qui insere la seance en base avec ses parties agregees.
 
 Tous les tests unitaires et de widget passent. Flutter analyze et flutter test sont verts. La cross-compile Windows reste valide.
 
-## Risques specifiques a ces taches
+## Risques specifiques
 
-Le risque principal est la production des planches 2 et 3, qui n'ont pas encore ete generees. Si ChatGPT a du mal a produire une planche niveau 3 avec six emotions distinctes dans une scene dense, on peut soit reduire le nombre d'emotions pour ce niveau, soit composer la planche en plusieurs etapes de generation, soit accepter un niveau 3 a cinq emotions seulement.
-
-Le second risque est l'effort d'annotation. Trois planches de quarante a soixante personnages chacune, cela fait entre cent vingt et cent quatre-vingts annotations a poser manuellement. L'outil HTML est concu pour rendre ce travail le plus rapide possible mais cela reste un investissement de trente a quarante-cinq minutes. Il faut bloquer ce temps de production dans le planning.
-
-Le troisieme risque est l'interaction tactile sur des zones petites au niveau 3. Si la planche est dense et les personnages petits, les zones cliquables peuvent se chevaucher. Dans ce cas l'outil d'annotation permet de reduire le rayon pour eviter les recouvrements, et le test interactif validera l'ergonomie reelle.
+La production des planches etant faite, le risque principal est ecarte. Restent le risque de performance d'affichage d'une grande image scrollable sur la tablette, a verifier tot, et le risque de justesse de la conversion des coordonnees de tap, a tester soigneusement. L'equilibrage du scoring est gere par la variable de configuration centralisee, ajustable apres les premiers tests reels.
