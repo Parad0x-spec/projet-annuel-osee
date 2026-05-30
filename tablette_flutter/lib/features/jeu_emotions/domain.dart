@@ -34,6 +34,12 @@ class PayloadCreationPatientInvalideException implements Exception {
   String toString() => 'PayloadCreationPatientInvalideException: $message';
 }
 
+const PayloadCreationPatient patientDemo = PayloadCreationPatient(
+  patientId: '00000000-0000-4000-8000-000000000000',
+  patientInitiales: 'DEMO',
+  niveauDemande: 1,
+);
+
 const String jeuTypeEmotions = 'emotions';
 
 const String emotionJoie = 'joie';

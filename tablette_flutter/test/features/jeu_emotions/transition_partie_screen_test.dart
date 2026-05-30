@@ -21,10 +21,14 @@ Partie _partieAvecScore(int score) => Partie(
 
 Future<ProviderContainer> _monterAvecPartie(
   WidgetTester tester,
-  Partie partie,
-) async {
+  Partie partie, {
+  bool demo = false,
+}) async {
   final container = ProviderContainer();
   addTearDown(container.dispose);
+  if (demo) {
+    container.read(sessionEnCoursProvider.notifier).chargerDemo();
+  }
   container.read(partiesSeanceProvider.notifier).ajouter(partie);
 
   final routeur = creerRouteurApplication();
@@ -86,6 +90,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(Textes.titreRecapitulatifSeance), findsOneWidget);
+  });
+
+  testWidgets(
+      'en mode demo propose Retour accueil au lieu de Terminer la seance',
+      (WidgetTester tester) async {
+    final container =
+        await _monterAvecPartie(tester, _partieAvecScore(50), demo: true);
+
+    expect(find.text(Textes.boutonTerminerSeance), findsNothing);
+    expect(find.text(Textes.boutonNouvellePartie), findsOneWidget);
+
+    await tester.tap(find.text(Textes.boutonRetourAccueil));
+    await tester.pumpAndSettle();
+
+    expect(find.text(Textes.titreAccueil), findsOneWidget);
+    expect(container.read(sessionEnCoursProvider), isA<AucunPatientCharge>());
+    expect(container.read(partiesSeanceProvider), isEmpty);
   });
 
   testWidgets('sans partie affiche le message dedie',

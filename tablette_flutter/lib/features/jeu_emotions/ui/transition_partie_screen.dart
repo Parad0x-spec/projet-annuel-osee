@@ -12,16 +12,23 @@ class TransitionPartieScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final parties = ref.watch(partiesSeanceProvider);
+    final etatSession = ref.watch(sessionEnCoursProvider);
+    final estDemo = etatSession is PatientCharge && etatSession.session.estDemo;
     return Scaffold(
       appBar: AppBar(title: const Text(Textes.titreTransitionPartie)),
       body: SafeArea(
         child: Center(
           child: parties.isEmpty
               ? _vueAucunePartie(context)
-              : _vueResultat(context, parties.last),
+              : _vueResultat(context, ref, parties.last, estDemo),
         ),
       ),
     );
+  }
+
+  void _retourAccueil(BuildContext context, WidgetRef ref) {
+    ref.read(sessionEnCoursProvider.notifier).reinitialiser();
+    context.go('/');
   }
 
   Widget _vueAucunePartie(BuildContext context) {
@@ -47,7 +54,12 @@ class TransitionPartieScreen extends ConsumerWidget {
     );
   }
 
-  Widget _vueResultat(BuildContext context, Partie partie) {
+  Widget _vueResultat(
+    BuildContext context,
+    WidgetRef ref,
+    Partie partie,
+    bool estDemo,
+  ) {
     final etoiles = calculerEtoiles(partie.score);
     final message = _messageSelonEtoiles(etoiles);
     return Padding(
@@ -70,10 +82,14 @@ class TransitionPartieScreen extends ConsumerWidget {
                 width: 320,
                 height: 96,
                 child: OutlinedButton(
-                  onPressed: () => context.go('/recapitulatif-seance'),
-                  child: const Text(
-                    Textes.boutonTerminerSeance,
-                    style: TextStyle(fontSize: 22),
+                  onPressed: estDemo
+                      ? () => _retourAccueil(context, ref)
+                      : () => context.go('/recapitulatif-seance'),
+                  child: Text(
+                    estDemo
+                        ? Textes.boutonRetourAccueil
+                        : Textes.boutonTerminerSeance,
+                    style: const TextStyle(fontSize: 22),
                   ),
                 ),
               ),

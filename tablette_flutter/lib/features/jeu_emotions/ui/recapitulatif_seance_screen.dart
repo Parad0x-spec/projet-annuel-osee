@@ -11,6 +11,8 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final parties = ref.watch(partiesSeanceProvider);
+    final etatSession = ref.watch(sessionEnCoursProvider);
+    final estDemo = etatSession is PatientCharge && etatSession.session.estDemo;
 
     return Scaffold(
       appBar: AppBar(title: const Text(Textes.titreRecapitulatifSeance)),
@@ -79,7 +81,7 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
                     width: 320,
                     height: 96,
                     child: ElevatedButton(
-                      onPressed: parties.isEmpty
+                      onPressed: (parties.isEmpty || estDemo)
                           ? null
                           : () => context.go('/export-session'),
                       child: const Text(

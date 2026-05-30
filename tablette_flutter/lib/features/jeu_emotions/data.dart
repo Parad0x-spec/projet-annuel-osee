@@ -8,8 +8,9 @@ import 'domain.dart';
 
 class SessionEnCours {
   final PayloadCreationPatient patient;
+  final bool estDemo;
 
-  const SessionEnCours(this.patient);
+  const SessionEnCours(this.patient, {this.estDemo = false});
 }
 
 Map<String, dynamic> serialiserPayloadSession(Session session) {

@@ -31,6 +31,10 @@ class ControleurSession extends Notifier<EtatSession> {
     state = PatientCharge(SessionEnCours(patient));
   }
 
+  void chargerDemo() {
+    state = PatientCharge(SessionEnCours(patientDemo, estDemo: true));
+  }
+
   void reinitialiser() {
     ref.read(partiesSeanceProvider.notifier).vider();
     state = const AucunPatientCharge();

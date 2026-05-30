@@ -34,10 +34,13 @@ Future<ProviderContainer> _monter(
   WidgetTester tester,
   List<Partie> parties, {
   bool avecPatient = true,
+  bool demo = false,
 }) async {
   final container = ProviderContainer();
   addTearDown(container.dispose);
-  if (avecPatient) {
+  if (demo) {
+    container.read(sessionEnCoursProvider.notifier).chargerDemo();
+  } else if (avecPatient) {
     container.read(sessionEnCoursProvider.notifier).charger(_patient);
   }
   for (final p in parties) {
@@ -113,6 +116,43 @@ void main() {
       );
       expect(bouton.onPressed, isNull);
       expect(find.text(Textes.messageAucunePartieJouee), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'en mode demo le bouton Generer le QR de seance est desactive',
+    (WidgetTester tester) async {
+      final container = await _monter(
+        tester,
+        <Partie>[_partie(numeroPlanche: 1, emotion: emotionJoie, score: 80)],
+        demo: true,
+      );
+
+      final etat = container.read(sessionEnCoursProvider) as PatientCharge;
+      expect(etat.session.estDemo, isTrue);
+
+      final bouton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, Textes.boutonGenererQrSession),
+      );
+      expect(bouton.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'en session reelle avec parties le bouton Generer le QR est actif',
+    (WidgetTester tester) async {
+      final container = await _monter(
+        tester,
+        <Partie>[_partie(numeroPlanche: 1, emotion: emotionJoie, score: 80)],
+      );
+
+      final etat = container.read(sessionEnCoursProvider) as PatientCharge;
+      expect(etat.session.estDemo, isFalse);
+
+      final bouton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, Textes.boutonGenererQrSession),
+      );
+      expect(bouton.onPressed, isNotNull);
     },
   );
 
