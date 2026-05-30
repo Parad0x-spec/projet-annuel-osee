@@ -19,8 +19,32 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
   final TransformationController _transformController =
       TransformationController();
   final List<_FeedbackRouge> _feedbacksRouges = <_FeedbackRouge>[];
+  Planche? _plancheAjustee;
 
   static const Duration _dureeFeedbackRouge = Duration(seconds: 1);
+
+  void _ajusterAuViewport(Planche planche, Size viewport) {
+    if (_plancheAjustee == planche) return;
+    if (viewport.width <= 0 || viewport.height <= 0) return;
+    final echelleFit = _echelleFit(planche, viewport);
+    final largeurAffichee = planche.largeur * echelleFit;
+    final hauteurAffichee = planche.hauteur * echelleFit;
+    final translationX = (viewport.width - largeurAffichee) / 2;
+    final translationY = (viewport.height - hauteurAffichee) / 2;
+    _transformController.value = Matrix4(
+      echelleFit, 0, 0, 0,
+      0, echelleFit, 0, 0,
+      0, 0, 1, 0,
+      translationX, translationY, 0, 1,
+    );
+    _plancheAjustee = planche;
+  }
+
+  double _echelleFit(Planche planche, Size viewport) {
+    final echelleLargeur = viewport.width / planche.largeur;
+    final echelleHauteur = viewport.height / planche.hauteur;
+    return echelleLargeur < echelleHauteur ? echelleLargeur : echelleHauteur;
+  }
 
   @override
   void dispose() {
@@ -121,7 +145,7 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 Textes.consigneTrouverEmotion(
                   Textes.libelleEmotion(moteur.emotionCible),
@@ -132,37 +156,48 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
             ),
             Expanded(
               child: ClipRect(
-                child: InteractiveViewer(
-                  transformationController: _transformController,
-                  minScale: 0.3,
-                  maxScale: 4.0,
-                  boundaryMargin: const EdgeInsets.all(200),
-                  child: SizedBox(
-                    width: planche.largeur.toDouble(),
-                    height: planche.hauteur.toDouble(),
-                    child: GestureDetector(
-                      key: const Key('jeu-canvas'),
-                      behavior: HitTestBehavior.opaque,
-                      onTapDown: (d) => _onTapDown(d, moteur),
-                      child: Stack(
-                        children: <Widget>[
-                          Positioned.fill(
-                            child: Image.asset(
-                              planche.cheminAsset,
-                              fit: BoxFit.fill,
-                            ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final viewport = constraints.biggest;
+                    final echelleFit = _echelleFit(planche, viewport);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      _ajusterAuViewport(planche, viewport);
+                    });
+                    return InteractiveViewer(
+                      transformationController: _transformController,
+                      constrained: false,
+                      minScale: echelleFit * 0.8,
+                      maxScale: 4.0,
+                      boundaryMargin: const EdgeInsets.all(double.infinity),
+                      child: SizedBox(
+                        width: planche.largeur.toDouble(),
+                        height: planche.hauteur.toDouble(),
+                        child: GestureDetector(
+                          key: const Key('jeu-canvas'),
+                          behavior: HitTestBehavior.opaque,
+                          onTapDown: (d) => _onTapDown(d, moteur),
+                          child: Stack(
+                            children: <Widget>[
+                              Positioned.fill(
+                                child: Image.asset(
+                                  planche.cheminAsset,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              ..._feedbacksVerts(moteur),
+                              ..._feedbacksRougesWidgets(),
+                            ],
                           ),
-                          ..._feedbacksVerts(moteur),
-                          ..._feedbacksRougesWidgets(),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[

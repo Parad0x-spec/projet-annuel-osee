@@ -77,6 +77,37 @@ void main() {
   );
 
   testWidgets(
+    'la planche est dimensionnee en pixels natifs sans contrainte ni deformation',
+    (WidgetTester tester) async {
+      await _monterAvecPartie(tester);
+
+      final viewer = tester.widget<InteractiveViewer>(
+        find.byType(InteractiveViewer),
+      );
+      expect(viewer.constrained, isFalse);
+
+      final boiteNative = tester.widget<SizedBox>(
+        find
+            .ancestor(
+              of: find.byKey(const Key('jeu-canvas')),
+              matching: find.byType(SizedBox),
+            )
+            .first,
+      );
+      expect(boiteNative.width, _plancheFictive.largeur.toDouble());
+      expect(boiteNative.height, _plancheFictive.hauteur.toDouble());
+
+      final image = tester.widget<Image>(
+        find.descendant(
+          of: find.byKey(const Key('jeu-canvas')),
+          matching: find.byType(Image),
+        ),
+      );
+      expect(image.fit, BoxFit.contain);
+    },
+  );
+
+  testWidgets(
     'tap sur une cible affiche un feedback vert persistant',
     (WidgetTester tester) async {
       final container = await _monterAvecPartie(tester);
