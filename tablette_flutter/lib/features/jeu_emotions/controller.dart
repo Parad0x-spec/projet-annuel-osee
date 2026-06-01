@@ -23,21 +23,55 @@ class PatientCharge extends EtatSession {
   const PatientCharge(this.session);
 }
 
+final contexteSessionInitialProvider = Provider<SessionEnCours?>((ref) => null);
+
+final depotContexteSessionProvider =
+    FutureProvider<DepotContexteSession>((ref) async {
+  final stockage = await ref.watch(stockageProvider.future);
+  return DepotContexteSession(stockage);
+});
+
 class ControleurSession extends Notifier<EtatSession> {
   @override
-  EtatSession build() => const AucunPatientCharge();
+  EtatSession build() {
+    final contexteInitial = ref.watch(contexteSessionInitialProvider);
+    if (contexteInitial == null) {
+      return const AucunPatientCharge();
+    }
+    return PatientCharge(contexteInitial);
+  }
 
   void charger(PayloadCreationPatient patient) {
     state = PatientCharge(SessionEnCours(patient));
+    _persisterContexte(patient, estDemo: false);
   }
 
   void chargerDemo() {
     state = PatientCharge(SessionEnCours(patientDemo, estDemo: true));
+    _persisterContexte(patientDemo, estDemo: true);
   }
 
   void reinitialiser() {
     ref.read(partiesSeanceProvider.notifier).vider();
     state = const AucunPatientCharge();
+    _effacerContexte();
+  }
+
+  Future<void> _persisterContexte(
+    PayloadCreationPatient patient, {
+    required bool estDemo,
+  }) async {
+    try {
+      final depot = await ref.read(depotContexteSessionProvider.future);
+      await depot.enregistrer(patient: patient, estDemo: estDemo);
+    } catch (_) {}
+  }
+
+  Future<void> _effacerContexte() async {
+    try {
+      final depot = await ref.read(depotContexteSessionProvider.future);
+      await depot.effacer();
+    } catch (_) {}
   }
 }
 

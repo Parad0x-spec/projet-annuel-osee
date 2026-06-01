@@ -69,4 +69,68 @@ void main() {
       expect(await stockage.compterAppairages(), 2);
     });
   });
+
+  group('Stockage contexte de session', () {
+    late Stockage stockage;
+
+    setUp(() async {
+      stockage = await Stockage.ouvrirEnMemoire(databaseFactoryFfi);
+    });
+
+    tearDown(() async {
+      await stockage.fermer();
+    });
+
+    test('contexte absent au depart', () async {
+      expect(await stockage.lireContexteSession(), isNull);
+    });
+
+    test('enregistrement puis lecture retourne les memes valeurs', () async {
+      await stockage.enregistrerContexteSession(
+        patientId: 'id-123',
+        patientInitiales: 'MD',
+        niveauDemande: 3,
+        estDemo: false,
+      );
+
+      final ligne = await stockage.lireContexteSession();
+      expect(ligne, isNotNull);
+      expect(ligne!['patient_id'], 'id-123');
+      expect(ligne['patient_initiales'], 'MD');
+      expect(ligne['niveau_demande'], 3);
+      expect(ligne['est_demo'], 0);
+    });
+
+    test('un second enregistrement remplace le contexte existant', () async {
+      await stockage.enregistrerContexteSession(
+        patientId: 'id-1',
+        patientInitiales: 'AA',
+        niveauDemande: 1,
+        estDemo: false,
+      );
+      await stockage.enregistrerContexteSession(
+        patientId: 'demo-id',
+        patientInitiales: 'DEMO',
+        niveauDemande: 1,
+        estDemo: true,
+      );
+
+      final ligne = await stockage.lireContexteSession();
+      expect(ligne!['patient_id'], 'demo-id');
+      expect(ligne['est_demo'], 1);
+      final total = await stockage.lireContexteSession();
+      expect(total, isNotNull);
+    });
+
+    test('effacement supprime le contexte', () async {
+      await stockage.enregistrerContexteSession(
+        patientId: 'id-123',
+        patientInitiales: 'MD',
+        niveauDemande: 3,
+        estDemo: false,
+      );
+      await stockage.effacerContexteSession();
+      expect(await stockage.lireContexteSession(), isNull);
+    });
+  });
 }

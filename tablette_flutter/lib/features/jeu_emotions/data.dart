@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 import '../../core/qr_envelope.dart';
+import '../../core/stockage.dart';
 import '../appairage/domain.dart';
 import 'domain.dart';
 
@@ -11,6 +12,39 @@ class SessionEnCours {
   final bool estDemo;
 
   const SessionEnCours(this.patient, {this.estDemo = false});
+}
+
+class DepotContexteSession {
+  final Stockage _stockage;
+
+  DepotContexteSession(this._stockage);
+
+  Future<void> enregistrer({
+    required PayloadCreationPatient patient,
+    required bool estDemo,
+  }) {
+    return _stockage.enregistrerContexteSession(
+      patientId: patient.patientId,
+      patientInitiales: patient.patientInitiales,
+      niveauDemande: patient.niveauDemande,
+      estDemo: estDemo,
+    );
+  }
+
+  Future<SessionEnCours?> lire() async {
+    final ligne = await _stockage.lireContexteSession();
+    if (ligne == null) return null;
+    return SessionEnCours(
+      PayloadCreationPatient(
+        patientId: ligne['patient_id'] as String,
+        patientInitiales: ligne['patient_initiales'] as String,
+        niveauDemande: ligne['niveau_demande'] as int,
+      ),
+      estDemo: (ligne['est_demo'] as int) == 1,
+    );
+  }
+
+  Future<void> effacer() => _stockage.effacerContexteSession();
 }
 
 Map<String, dynamic> serialiserPayloadSession(Session session) {

@@ -9,8 +9,8 @@ import '../features/jeu_emotions/ui/jeu_screen.dart';
 import '../features/jeu_emotions/ui/recapitulatif_seance_screen.dart';
 import '../features/jeu_emotions/ui/transition_partie_screen.dart';
 
-GoRouter creerRouteurApplication() => GoRouter(
-  initialLocation: '/',
+GoRouter creerRouteurApplication({String initialLocation = '/'}) => GoRouter(
+  initialLocation: initialLocation,
   routes: <GoRoute>[
     GoRoute(
       path: '/',
@@ -54,5 +54,3 @@ GoRouter creerRouteurApplication() => GoRouter(
     ),
   ],
 );
-
-final GoRouter routeurApplication = creerRouteurApplication();
