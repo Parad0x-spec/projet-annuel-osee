@@ -45,7 +45,7 @@ class AccueilScreen extends ConsumerWidget {
 
   void _lancerModeDemo(BuildContext context, WidgetRef ref) {
     ref.read(sessionEnCoursProvider.notifier).chargerDemo();
-    context.go('/configuration-partie');
+    context.go('/choix-planche');
   }
 
   Widget _construireBoutonTactile({

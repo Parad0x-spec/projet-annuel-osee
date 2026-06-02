@@ -6,16 +6,14 @@ import '../../../core/textes.dart';
 import '../controller.dart';
 import '../data.dart';
 
-class ConfigurationPartieScreen extends ConsumerStatefulWidget {
-  const ConfigurationPartieScreen({super.key});
+class ChoixPlancheScreen extends ConsumerStatefulWidget {
+  const ChoixPlancheScreen({super.key});
 
   @override
-  ConsumerState<ConfigurationPartieScreen> createState() =>
-      _ConfigurationPartieScreenState();
+  ConsumerState<ChoixPlancheScreen> createState() => _ChoixPlancheScreenState();
 }
 
-class _ConfigurationPartieScreenState
-    extends ConsumerState<ConfigurationPartieScreen> {
+class _ChoixPlancheScreenState extends ConsumerState<ChoixPlancheScreen> {
   int? _planche;
   bool _lancementEnCours = false;
 
@@ -45,7 +43,7 @@ class _ConfigurationPartieScreenState
     final etatSession = ref.watch(sessionEnCoursProvider);
     if (etatSession is! PatientCharge) {
       return Scaffold(
-        appBar: AppBar(title: const Text(Textes.titreConfigurationPartie)),
+        appBar: AppBar(title: const Text(Textes.titreChoixPlanche)),
         body: SafeArea(
           child: Center(
             child: SizedBox(
@@ -65,7 +63,7 @@ class _ConfigurationPartieScreenState
     final pretALancer = _planche != null && !_lancementEnCours;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(Textes.titreConfigurationPartie)),
+      appBar: AppBar(title: const Text(Textes.titreChoixPlanche)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -87,9 +85,11 @@ class _ConfigurationPartieScreenState
                       child: SizedBox(
                         height: 96,
                         child: ElevatedButton(
+                          key: Key('planche-$n'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                selectionne ? Colors.blue : Colors.grey.shade200,
+                            backgroundColor: selectionne
+                                ? Colors.blue
+                                : Colors.grey.shade200,
                             foregroundColor:
                                 selectionne ? Colors.white : Colors.black,
                           ),
@@ -114,7 +114,7 @@ class _ConfigurationPartieScreenState
                     child: _lancementEnCours
                         ? const CircularProgressIndicator()
                         : const Text(
-                            Textes.boutonLancerPartie,
+                            Textes.boutonLancerPlanche,
                             style: TextStyle(fontSize: 22),
                           ),
                   ),

@@ -43,7 +43,7 @@ void main() {
       expect(session.estDemo, isTrue);
       expect(session.patient.patientInitiales, 'DEMO');
 
-      expect(find.text(Textes.titreConfigurationPartie), findsOneWidget);
+      expect(find.text(Textes.titreChoixPlanche), findsOneWidget);
     },
   );
 

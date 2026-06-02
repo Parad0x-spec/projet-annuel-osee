@@ -48,57 +48,66 @@ class Textes {
   static const String erreurDonneesPatientInvalides =
       'Données patient invalides.';
 
-  static const String titreConfigurationPartie = 'Configuration de la partie';
+  static const String titreChoixPlanche = 'Choix de la planche';
   static const String consignePlanche = 'Choisissez la planche';
-  static const String consigneEmotion = 'Choisissez l\'émotion à chercher';
   static String libellePlanche(int numero) => 'Planche $numero';
   static const String emotionJoieLibelle = 'Joie';
   static const String emotionColereLibelle = 'Colère';
   static const String emotionTristesseLibelle = 'Tristesse';
   static const String emotionPeurLibelle = 'Peur';
-  static const String boutonLancerPartie = 'Lancer la partie';
+  static const String boutonLancerPlanche = 'Lancer la planche';
   static const String erreurChargementPlanche =
       'Impossible de charger la planche.';
 
-  static const String titreJeu = 'Partie en cours';
+  static const String titreJeu = 'Jeu en cours';
   static String consigneTrouverEmotion(String emotionLibelle) =>
       'Trouve tous les enfants ${emotionLibelle.toLowerCase()}';
+  static const String consigneSelectionnerEmotion =
+      'Sélectionne une émotion dans la liste.';
+  static String compteurEmotion(int trouvees, int total) => '$trouvees/$total';
   static const String boutonJaiFini = 'J\'ai fini';
+  static const String messageResteDesCibles = 'Il reste des cibles à trouver';
   static const String boutonArreter = 'Arrêter';
-  static const String titreConfirmationArret = 'Arrêter la partie ?';
+  static const String titreConfirmationArret = 'Arrêter la planche ?';
   static const String messageConfirmationArret =
-      'La partie sera comptée comme abandonnée.';
+      'La planche en cours sera abandonnée.';
   static const String boutonConfirmerArret = 'Oui, arrêter';
   static const String boutonAnnulerArret = 'Continuer';
 
-  static const String titreTransitionPartie = 'Résultat de la partie';
+  static const String titreSelectionEmotions = 'Émotions à évaluer';
+  static const String consigneSelectionEmotions =
+      'Cochez les émotions à évaluer sur cette planche.';
+  static const String boutonValiderSelection = 'Valider';
+
+  static const String titreResultatPlanche = 'Résultat de la planche';
   static const String messageEncouragementUneEtoile =
       'Bien essayé ! Continue, tu progresses.';
   static const String messageEncouragementDeuxEtoiles =
       'Bon travail, tu y es presque !';
   static const String messageEncouragementTroisEtoiles =
       'Bravo, c\'est excellent !';
-  static const String boutonNouvellePartie = 'Nouvelle partie';
+  static String detailEmotionResultat({
+    required String emotionLibelle,
+    required int trouvees,
+    required int total,
+    required int score,
+    required bool evaluee,
+  }) =>
+      evaluee
+          ? '$emotionLibelle : $trouvees/$total — score $score / 100'
+          : '$emotionLibelle : non évaluée';
+  static const String boutonNouvellePlanche = 'Nouvelle planche';
   static const String boutonTerminerSeance = 'Terminer la séance';
 
   static const String titreRecapitulatifSeance = 'Récapitulatif de la séance';
   static const String messageAucunePartieJouee =
-      'Aucune partie jouée durant cette séance.';
-  static String partieResume({
-    required int numero,
-    required int numeroPlanche,
-    required String emotionLibelle,
-    required int score,
-  }) =>
-      'Partie $numero — Planche $numeroPlanche, ${emotionLibelle.toLowerCase()} — score $score / 100';
+      'Aucune planche jouée durant cette séance.';
   static String plancheResume({
     required int numero,
     required int numeroPlanche,
     required int scoreGlobal,
   }) =>
       'Planche jouée $numero — Planche $numeroPlanche — score $scoreGlobal / 100';
-  static const String consigneSelectionnerEmotion =
-      'Sélectionne une émotion dans la liste.';
   static const String boutonGenererQrSession = 'Générer le QR de séance';
   static const String boutonQuitterSansTransferer = 'Quitter sans transférer';
 

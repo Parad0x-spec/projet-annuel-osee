@@ -45,7 +45,7 @@ class ApplicationTablette extends StatelessWidget {
       title: Textes.titreApplication,
       debugShowCheckedModeBanner: false,
       routerConfig: creerRouteurApplication(
-        initialLocation: sessionRestauree ? '/configuration-partie' : '/',
+        initialLocation: sessionRestauree ? '/choix-planche' : '/',
       ),
     );
   }

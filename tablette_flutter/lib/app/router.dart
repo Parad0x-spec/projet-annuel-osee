@@ -2,12 +2,12 @@ import 'package:go_router/go_router.dart';
 
 import '../features/accueil/ui/accueil_screen.dart';
 import '../features/appairage/ui/appairage_screen.dart';
-import '../features/jeu_emotions/ui/configuration_partie_screen.dart';
+import '../features/jeu_emotions/ui/choix_planche_screen.dart';
 import '../features/jeu_emotions/ui/confirmation_patient_screen.dart';
 import '../features/jeu_emotions/ui/export_session_screen.dart';
 import '../features/jeu_emotions/ui/jeu_screen.dart';
 import '../features/jeu_emotions/ui/recapitulatif_seance_screen.dart';
-import '../features/jeu_emotions/ui/transition_partie_screen.dart';
+import '../features/jeu_emotions/ui/resultat_planche_screen.dart';
 
 GoRouter creerRouteurApplication({String initialLocation = '/'}) => GoRouter(
   initialLocation: initialLocation,
@@ -28,9 +28,9 @@ GoRouter creerRouteurApplication({String initialLocation = '/'}) => GoRouter(
       builder: (context, state) => const ConfirmationPatientScreen(),
     ),
     GoRoute(
-      path: '/configuration-partie',
-      name: 'configuration-partie',
-      builder: (context, state) => const ConfigurationPartieScreen(),
+      path: '/choix-planche',
+      name: 'choix-planche',
+      builder: (context, state) => const ChoixPlancheScreen(),
     ),
     GoRoute(
       path: '/jeu',
@@ -38,9 +38,9 @@ GoRouter creerRouteurApplication({String initialLocation = '/'}) => GoRouter(
       builder: (context, state) => const JeuScreen(),
     ),
     GoRoute(
-      path: '/transition-partie',
-      name: 'transition-partie',
-      builder: (context, state) => const TransitionPartieScreen(),
+      path: '/resultat-planche',
+      name: 'resultat-planche',
+      builder: (context, state) => const ResultatPlancheScreen(),
     ),
     GoRoute(
       path: '/recapitulatif-seance',

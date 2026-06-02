@@ -13,13 +13,13 @@ const _patient = PayloadCreationPatient(
   niveauDemande: 3,
 );
 
-Future<ProviderContainer> _monterConfirmation(WidgetTester tester) async {
+Future<ProviderContainer> _monter(WidgetTester tester) async {
   final container = ProviderContainer();
   addTearDown(container.dispose);
   container.read(sessionEnCoursProvider.notifier).charger(_patient);
 
   final routeur = creerRouteurApplication();
-  routeur.go('/confirmation-patient');
+  routeur.go('/choix-planche');
 
   await tester.pumpWidget(
     UncontrolledProviderScope(
@@ -33,42 +33,35 @@ Future<ProviderContainer> _monterConfirmation(WidgetTester tester) async {
 
 void main() {
   testWidgets(
-    'affiche les initiales chargees et les deux boutons',
+    'affiche le titre, la consigne et les quatre planches, sans choix d\'emotion',
     (WidgetTester tester) async {
-      await _monterConfirmation(tester);
-
-      expect(
-        find.text(Textes.confirmationPatientPret('MD')),
-        findsOneWidget,
-      );
-      expect(find.text(Textes.boutonCommencerJeu), findsOneWidget);
-      expect(find.text(Textes.boutonAnnuler), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'Commencer le jeu route vers la configuration de partie',
-    (WidgetTester tester) async {
-      await _monterConfirmation(tester);
-
-      await tester.tap(find.text(Textes.boutonCommencerJeu));
-      await tester.pumpAndSettle();
+      await _monter(tester);
 
       expect(find.text(Textes.titreChoixPlanche), findsOneWidget);
       expect(find.text(Textes.consignePlanche), findsOneWidget);
+      for (var n = 1; n <= 4; n++) {
+        expect(find.byKey(Key('planche-$n')), findsOneWidget);
+      }
     },
   );
 
   testWidgets(
-    'Annuler revient a l\'accueil et reinitialise la session',
+    'le bouton Lancer est desactive tant qu\'aucune planche n\'est choisie',
     (WidgetTester tester) async {
-      final container = await _monterConfirmation(tester);
+      await _monter(tester);
 
-      await tester.tap(find.text(Textes.boutonAnnuler));
-      await tester.pumpAndSettle();
+      final boutonAvant = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, Textes.boutonLancerPlanche),
+      );
+      expect(boutonAvant.onPressed, isNull);
 
-      expect(find.text(Textes.titreAccueil), findsOneWidget);
-      expect(container.read(sessionEnCoursProvider), isA<AucunPatientCharge>());
+      await tester.tap(find.byKey(const Key('planche-2')));
+      await tester.pump();
+
+      final boutonApres = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, Textes.boutonLancerPlanche),
+      );
+      expect(boutonApres.onPressed, isNotNull);
     },
   );
 }

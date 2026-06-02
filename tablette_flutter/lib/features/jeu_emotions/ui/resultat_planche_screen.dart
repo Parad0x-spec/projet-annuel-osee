@@ -6,8 +6,8 @@ import '../../../core/textes.dart';
 import '../controller.dart';
 import '../domain.dart';
 
-class TransitionPartieScreen extends ConsumerWidget {
-  const TransitionPartieScreen({super.key});
+class ResultatPlancheScreen extends ConsumerWidget {
+  const ResultatPlancheScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -15,13 +15,11 @@ class TransitionPartieScreen extends ConsumerWidget {
     final etatSession = ref.watch(sessionEnCoursProvider);
     final estDemo = etatSession is PatientCharge && etatSession.session.estDemo;
     return Scaffold(
-      appBar: AppBar(title: const Text(Textes.titreTransitionPartie)),
+      appBar: AppBar(title: const Text(Textes.titreResultatPlanche)),
       body: SafeArea(
-        child: Center(
-          child: planches.isEmpty
-              ? _vueAucunePartie(context)
-              : _vueResultat(context, ref, planches.last, estDemo),
-        ),
+        child: planches.isEmpty
+            ? _vueAucunePlanche(context)
+            : _vueResultat(context, ref, planches.last, estDemo),
       ),
     );
   }
@@ -31,26 +29,28 @@ class TransitionPartieScreen extends ConsumerWidget {
     context.go('/');
   }
 
-  Widget _vueAucunePartie(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(
-          Textes.messageAucunePartieJouee,
-          style: Theme.of(context).textTheme.titleLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: 360,
-          height: 96,
-          child: ElevatedButton(
-            onPressed: () => context.go('/'),
-            child: const Text(Textes.boutonRetourAccueil,
-                style: TextStyle(fontSize: 22)),
+  Widget _vueAucunePlanche(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            Textes.messageAucunePartieJouee,
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+          const SizedBox(height: 32),
+          SizedBox(
+            width: 360,
+            height: 96,
+            child: ElevatedButton(
+              onPressed: () => context.go('/'),
+              child: const Text(Textes.boutonRetourAccueil,
+                  style: TextStyle(fontSize: 22)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -65,16 +65,23 @@ class TransitionPartieScreen extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           _LigneEtoiles(nombre: etoiles),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Text(
             message,
             style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              children: planche.resultatsParEmotion
+                  .map((resultat) => _LigneDetailEmotion(resultat: resultat))
+                  .toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
@@ -97,9 +104,9 @@ class TransitionPartieScreen extends ConsumerWidget {
                 width: 320,
                 height: 96,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/configuration-partie'),
+                  onPressed: () => context.go('/choix-planche'),
                   child: const Text(
-                    Textes.boutonNouvellePartie,
+                    Textes.boutonNouvellePlanche,
                     style: TextStyle(fontSize: 22),
                   ),
                 ),
@@ -123,6 +130,30 @@ class TransitionPartieScreen extends ConsumerWidget {
   }
 }
 
+class _LigneDetailEmotion extends StatelessWidget {
+  final ResultatEmotion resultat;
+  const _LigneDetailEmotion({required this.resultat});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        title: Text(
+          Textes.detailEmotionResultat(
+            emotionLibelle: Textes.libelleEmotion(resultat.emotion),
+            trouvees: resultat.nbCiblesTrouvees,
+            total: resultat.nbCiblesTotal,
+            score: resultat.score,
+            evaluee: resultat.evaluee,
+          ),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ),
+    );
+  }
+}
+
 class _LigneEtoiles extends StatelessWidget {
   final int nombre;
   const _LigneEtoiles({required this.nombre});
@@ -138,7 +169,7 @@ class _LigneEtoiles extends StatelessWidget {
           child: Icon(
             remplie ? Icons.star : Icons.star_border,
             color: Colors.amber,
-            size: 96,
+            size: 72,
           ),
         );
       }),

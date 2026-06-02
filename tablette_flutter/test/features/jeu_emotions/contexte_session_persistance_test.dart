@@ -105,14 +105,14 @@ void main() {
           container: container,
           child: MaterialApp.router(
             routerConfig: creerRouteurApplication(
-              initialLocation: '/configuration-partie',
+              initialLocation: '/choix-planche',
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(Textes.titreConfigurationPartie), findsOneWidget);
+      expect(find.text(Textes.titreChoixPlanche), findsOneWidget);
     },
   );
 }
