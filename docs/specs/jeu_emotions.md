@@ -2,131 +2,94 @@
 
 ## Note de version
 
-Cette specification supersede les versions anterieures. Elle reflete le modele acte par l'ADR-08 dans sa forme definitive : quatre planches scenes pre-dessinees de niveau equivalent, quatre emotions (joie, colere, tristesse, peur), choix de la planche et de l'emotion par le praticien sur la tablette, accumulation de plusieurs parties dans une seance et transfert groupe par un seul QR en fin de seance.
+Cette specification est refondue pour le mode de jeu a navigation libre entre emotions, acte par l'ADR-10 apres les premiers tests sur Lenovo Tab P12. Elle supersede les versions anterieures qui decrivaient un jeu a une seule emotion par partie.
 
 ## Objet
 
-Le jeu des emotions est le premier contenu cognitif du projet, integre dans l'application tablette. Il est destine a des patients suivis pour TDAH ou troubles du spectre autistique, encadres par un praticien qui pilote la seance.
+Le jeu des emotions est le premier contenu cognitif du projet, integre dans l'application tablette, destine a des patients suivis pour TDAH ou troubles du spectre autistique et encadres par un praticien qui pilote la seance.
 
-Le format est inspire des livres "Ou est Charlie". Le patient voit a l'ecran une planche dense illustrant une scene sociale (un parc) dans laquelle de nombreux enfants sont representes avec chacun une emotion. La consigne lui demande de trouver et taper tous les enfants exprimant une emotion donnee.
-
-Ce format travaille deux competences simultanement. L'attention visuelle selective, souvent alteree dans le TDAH, est sollicitee par l'exploration d'un champ visuel charge. La reconnaissance des emotions sur des visages en contexte social, souvent alteree dans le spectre autistique, est sollicitee par l'identification de l'emotion cible.
+Le format est inspire des livres "Ou est Charlie". Le patient voit une planche dense illustrant une scene sociale ou de nombreux enfants expriment chacun une emotion. Le patient cherche et tape les enfants exprimant l'emotion demandee. Le jeu travaille a la fois l'attention visuelle selective et la reconnaissance des emotions en contexte social.
 
 ## Banque de planches
 
-La banque comprend quatre planches scenes pour cette premiere version. Les quatre planches sont de niveau de difficulte equivalent : elles representent toutes les quatre memes emotions et ont une densite comparable. Elles ne correspondent pas a des niveaux croissants, mais constituent un pool de variete permettant au praticien de changer de support pour un meme patient afin d'eviter la memorisation des emplacements et la lassitude.
+La banque comprend quatre planches scenes de niveau equivalent, produites via ChatGPT et annotees manuellement. Elles representent toutes les quatre memes emotions et constituent un pool de variete pour eviter la memorisation. Elles sont au format JPG dans tablette_flutter/assets/planches/, chacune accompagnee d'un fichier JSON d'annotation listant les personnages avec coordonnees, rayon de zone cliquable et emotion.
 
-Les planches sont produites par generation d'images via ChatGPT (Image-1) a partir d'un prompt detaille en francais. Le prompt decrit une scene de parc vivante, un nombre eleve de personnages, la repartition equilibree des quatre emotions, des expressions faciales tres lisibles et exagerees, et l'absence de bulles de bande dessinee ou de smileys flottants pour preserver le realisme de la scene.
+Les quatre emotions du jeu sont la joie, la colere, la tristesse et la peur, identifiees dans le code par les chaines joie, colere, tristesse, peur.
 
-Chaque planche est livree au format JPG, dimensions typiques autour de 1536 pixels de large, poids autour de 800 kilo-octets. Les quatre planches sont rangees dans tablette_flutter/assets/planches/ sous les noms planche_1.jpg a planche_4.jpg.
+## Deroulement d'une seance
 
-Chaque planche est associee a un fichier d'annotation JSON portant le meme nom de base. Ce fichier contient la liste des personnages avec, pour chacun, ses coordonnees x et y dans l'image en pixels depuis le coin haut gauche, le rayon de la zone cliquable autour du visage en pixels, et l'emotion exprimee.
+Une seance porte sur un patient charge, qu'il provienne du vrai flux de scan QR ou du mode demo. Une seance peut comporter plusieurs planches jouees successivement.
 
-Le format JSON de l'annotation est le suivant.
+Le praticien choisit une premiere planche et lance le jeu. Le patient joue sur cette planche en cherchant les differentes emotions. Quand la planche est terminee, le praticien peut en lancer une autre ou terminer la seance. Les resultats de toutes les planches jouees sont accumules et transmis au PC en fin de seance via un unique QR de session.
 
-```json
-{
-  "planche": "planche_1.jpg",
-  "largeur": 1536,
-  "hauteur": 912,
-  "personnages": [
-    {"x": 265, "y": 195, "rayon": 30, "emotion": "joie"},
-    {"x": 419, "y": 152, "rayon": 30, "emotion": "tristesse"},
-    {"x": 539, "y": 240, "rayon": 30, "emotion": "colere"}
-  ]
-}
-```
+## Deroulement d'une planche jouee
 
-L'annotation est realisee avec l'outil HTML livre dans outils/annotateur_planche.html. Le champ planche du JSON peut contenir le nom du fichier original utilise lors de l'annotation et ne correspond pas necessairement au nom final du fichier ; le code charge l'image par son chemin d'asset reel et n'utilise pas ce champ pour localiser l'image.
+Le praticien selectionne une planche. L'ecran de jeu affiche la planche en occupant le maximum d'espace disponible, avec le zoom et le defilement disponibles pour examiner les visages de pres. Une barre laterale presente les quatre emotions, chacune accompagnee d'un compteur indiquant le nombre de cibles trouvees sur le nombre total de cibles de cette emotion sur la planche.
 
-Les quatre planches du projet sont annotees et contiennent chacune un nombre suffisant de personnages pour chaque emotion. A titre indicatif, les comptages observes vont d'environ trois a dix-sept personnages par emotion selon la planche, ce qui garantit qu'une consigne sur n'importe quelle emotion a toujours des cibles a trouver.
+Le praticien ou le patient selectionne une emotion dans la barre, ce qui definit l'emotion cible courante. La consigne affichee reflete cette emotion, par exemple "Trouve tous les enfants en colere". Le patient tape les tetes qu'il pense correspondre.
 
-## Emotions
+A chaque tap, l'application determine si les coordonnees tombent dans la zone cliquable d'un personnage annote. Si oui, elle compare l'emotion du personnage avec l'emotion cible courante. Si le personnage exprime l'emotion cible et n'a pas deja ete trouve, un marqueur vert avec une icone de validation est pose sur la tete et reste affiche jusqu'a la fin de la planche, et le compteur de cette emotion est incremente. Si le personnage exprime une autre emotion, un marqueur rouge avec une icone de croix est pose sur la tete et reste affiche, et le nombre de faux positifs est incremente. Si le tap ne tombe sur aucun personnage, rien ne se passe.
 
-Les quatre emotions du jeu sont la joie, la colere, la tristesse et la peur. Elles sont identifiees dans le code par les chaines joie, colere, tristesse, peur. Toute autre valeur dans un fichier d'annotation est consideree comme invalide et provoque une erreur de chargement de la planche.
+Le patient peut changer d'emotion cible a tout moment en selectionnant une autre emotion dans la barre laterale. Les marqueurs deja poses, verts comme rouges, restent affiches. Les compteurs de toutes les emotions restent visibles et a jour en permanence.
 
-## Mecanique d'une partie
+Le bouton de fin, intitule "J'ai fini", indique s'il reste des cibles a trouver. Tant que toutes les cibles de la planche ne sont pas trouvees, le bouton signale qu'il en reste, par exemple par un libelle ou un indicateur visuel distinct. Le praticien reste libre de terminer la planche meme s'il reste des cibles.
 
-Une partie correspond a une planche et une emotion, choisies par le praticien sur la tablette avant le lancement.
+## Marqueurs persistants
 
-Au lancement, la tablette affiche en haut la consigne, par exemple "Trouve tous les enfants en colere". En dessous, la planche complete est affichee dans un canvas qui peut etre scrolle si la planche depasse la taille de l'ecran.
+Une difference importante avec la version precedente est que le marqueur rouge de faux positif reste affiche jusqu'a la fin de la planche, au lieu de disparaitre apres un court instant. Cela permet au praticien de garder une trace visible des erreurs commises par le patient pendant toute la planche. Les marqueurs verts de reussite restent egalement affiches comme avant.
 
-Le patient tape sur les zones qu'il pense correspondre. A chaque tap, l'application verifie si les coordonnees tombent dans la zone cliquable d'un personnage annote. Si oui, elle compare l'emotion du personnage avec l'emotion consigne.
+## Fin d'une planche
 
-Si le tap correspond a un personnage cible, un point vert avec une icone de validation apparait sur le visage et reste affiche jusqu'a la fin de la partie. Le compteur de cibles trouvees est incremente.
+Quand le praticien termine une planche via le bouton de fin, le comportement depend de l'etat d'avancement.
 
-Si le tap correspond a un personnage d'une autre emotion, un point rouge avec une icone de croix apparait sur le visage et reste affiche environ une seconde avant de s'effacer. Le compteur de faux positifs est incremente.
+Si toutes les emotions de la planche ont ete entierement traitees, c'est-a-dire que toutes les cibles de toutes les emotions ont ete trouvees, on passe directement a l'ecran de resultat de la planche.
 
-Si le tap ne tombe sur aucun personnage annote, rien ne se passe. On ne penalise pas un clic dans le vide.
-
-La partie se termine de trois manieres. Soit le patient a trouve tous les personnages cibles de la planche, auquel cas elle se termine automatiquement. Soit le patient (ou le praticien) appuie sur le bouton "J'ai fini" qui valide la partie en l'etat. Soit la partie est abandonnee avant la fin via un bouton d'arret, auquel cas elle est marquee comme abandonnee dans les donnees.
-
-Quand la partie se termine, un ecran de transition affiche le resultat sous deux formes. Pour le patient, une note ludique en etoiles de une a trois avec un message d'encouragement neutre. Cet ecran propose au praticien de lancer une nouvelle partie en choisissant une autre planche et une autre emotion, ou de terminer la seance.
-
-## Accumulation des parties et fin de seance
-
-Plusieurs parties s'accumulent au cours d'une seance. Chaque partie jouee est enregistree dans l'etat de la seance en memoire sur la tablette.
-
-Quand le praticien decide de terminer la seance, un ecran recapitulatif affiche l'ensemble des parties jouees et propose de generer le QR de session. Ce QR unique contient les donnees agregees de toutes les parties de la seance. Il est scanne par le PC qui rapatrie l'ensemble pour mettre a jour le suivi du patient.
-
-Un bouton permet aussi de quitter sans transferer, en mode degrade, en cas de probleme.
+Si certaines emotions n'ont pas ete traitees ou pas terminees, un tableau a cases a cocher est presente au praticien. Ce tableau liste les quatre emotions et permet au praticien de cocher celles sur lesquelles il souhaite que le patient soit evalue. Cette possibilite respecte le principe selon lequel on n'evalue le patient que sur les emotions qu'on lui a reellement fait chercher. Le score de la planche ne portera que sur les emotions cochees. Ce tableau n'apparait que lorsque la planche est incomplete ; si tout a ete fait, il est inutile et donc omis.
 
 ## Calcul du score
 
-Le score d'une partie est calcule a partir du nombre de cibles trouvees note T, du nombre de cibles ratees note R, et du nombre de faux positifs note F.
+Le score est calcule par emotion puis agrege.
 
-Le score brut sur cent vaut (T / (T + R)) * 100 - F * 5. Le facteur cinq par faux positif est arbitraire pour cette premiere version et pourra etre ajuste apres les premiers tests. Le score est borne entre zero et cent.
+Pour une emotion donnee, on note T le nombre de cibles trouvees pour cette emotion, R le nombre de cibles de cette emotion non trouvees, et F le nombre de faux positifs attribues a cette emotion, c'est-a-dire les fois ou le patient a tape une tete de cette emotion alors qu'une autre emotion etait ciblee, ou inversement selon la convention retenue a l'implementation. Le score par emotion suit la meme logique que la version precedente, soit une proportion de reussite diminuee d'une penalite pour les faux positifs, bornee entre zero et cent.
 
-L'affichage en etoiles cote patient suit la regle suivante. De zero a quarante, une etoile et un message encourageant. De quarante-et-un a soixante-quinze, deux etoiles. Au-dessus de soixante-quinze, trois etoiles. Aucun feedback negatif n'est donne, conformement au principe de bienveillance pose dans la note de cadrage.
+Le score global d'une planche est la moyenne des scores des emotions retenues pour l'evaluation, c'est-a-dire toutes les emotions si la planche est complete, ou seulement les emotions cochees dans le tableau de fin si la planche est incomplete.
+
+Comme dans la version precedente, un affichage en etoiles de une a trois traduit le score pour le patient de maniere ludique et bienveillante, sans feedback negatif. Les seuils restent parametrables via une configuration centralisee.
 
 ## Donnees enregistrees et transmises au PC
 
-Le jeu collecte des donnees pendant chaque partie. Le detail tap par tap (horodatage relatif au debut de partie, coordonnees, emotion du personnage tape, justesse) est collecte en memoire mais n'est pas transmis dans le QR pour cette version, en raison de la capacite limitee d'un QR code.
+Le detail tap par tap reste collecte en memoire pendant le jeu mais n'est pas transmis dans le QR, pour respecter la capacite limitee d'un QR.
 
-Les donnees transmises au PC sont agregees. Au niveau de la seance, on transmet l'identifiant du patient et ses initiales recus dans le message creation_patient, la date et l'heure de debut de seance, le niveau_demande recu (conserve comme intention du praticien), et la liste des parties jouees.
+Les donnees transmises au PC sont structurees par seance, par planche et par emotion. Au niveau de la seance, on transmet l'identifiant et les initiales du patient et le niveau demande recu du PC. Pour chaque planche jouee, on transmet le numero de la planche et, pour chaque emotion evaluee, le nombre de cibles trouvees, le nombre total de cibles, le nombre de faux positifs et le score de cette emotion, ainsi que le score global de la planche. On indique aussi quelles emotions ont ete retenues pour l'evaluation lorsque la planche etait incomplete.
 
-Au niveau de chaque partie, on transmet l'emotion cible, le numero de la planche utilisee, le nombre total de personnages de cette emotion presents sur la planche, le nombre de cibles trouvees, le nombre de faux positifs, le nombre de cibles ratees, le temps total de la partie en millisecondes, la maniere dont la partie s'est terminee (bouton, automatique, ou abandon), et le score de la partie.
-
-Ces donnees agregees suffisent pour le suivi de progression longitudinale, qui s'appuie sur l'evolution du taux de reussite, du nombre de fautes et du temps au fil des seances. Le fichier Excel de suivi cote PC, alimente a chaque reception de seance, presente ces donnees sous forme de tableau et de diagramme.
+Cette structure permet au PC de constituer un suivi fin montrant, planche par planche et emotion par emotion, l'evolution du patient et les emotions sur lesquelles il rencontre des difficultes. Le fichier de suivi cote PC exploite ces donnees sous forme de tableau et de diagramme.
 
 ## Ecrans et navigation
 
-Le jeu s'integre dans l'application tablette. Apres scan du QR creation_patient et confirmation du patient charge, le praticien accede a un ecran de configuration de partie.
+Apres chargement d'un patient et confirmation, le praticien accede a un ecran de choix de planche. Il selectionne une planche, ce qui lance l'ecran de jeu.
 
-L'ecran de configuration de partie permet de choisir la planche parmi les quatre disponibles et l'emotion parmi les quatre possibles, puis de lancer la partie via un bouton. Cet ecran est destine au praticien.
+L'ecran de jeu affiche la planche au maximum de l'espace disponible avec zoom et defilement, la barre laterale des quatre emotions avec leurs compteurs en temps reel, la consigne de l'emotion courante, et le bouton de fin indiquant s'il reste des cibles.
 
-L'ecran principal du jeu affiche en haut la consigne, au centre la planche dans un widget permettant le scroll, et en bas deux boutons : "J'ai fini" qui valide la partie, et "Arreter" qui propose une confirmation avant abandon.
+A la fin d'une planche, soit l'ecran de resultat s'affiche directement si la planche est complete, soit le tableau de selection des emotions a evaluer s'affiche d'abord si la planche est incomplete, puis le resultat.
 
-La planche est affichee dans un Stack qui superpose l'image et les indicateurs de feedback. Au moment d'un tap, l'application calcule les coordonnees du tap dans le referentiel de l'image en tenant compte du facteur d'echelle et du scroll, puis ajoute soit un feedback vert persistant soit un feedback rouge transitoire.
+L'ecran de resultat de planche affiche le score en etoiles pour le patient et le detail par emotion, et propose de jouer une autre planche ou de terminer la seance.
 
-L'ecran de transition de fin de partie affiche le score en etoiles et le message d'encouragement, avec deux options : lancer une nouvelle partie (retour a l'ecran de configuration) ou terminer la seance.
-
-L'ecran recapitulatif de fin de seance reprend l'export QR deja implemente, avec cette fois les donnees reelles de toutes les parties de la seance a la place du payload minimaliste de la tache 11.
+A la fin de la seance, l'ecran recapitulatif liste les planches jouees avec leurs scores et propose de generer le QR de session contenant toutes les donnees accumulees, ou de quitter sans transferer. En mode demo, la generation du QR est desactivee.
 
 ## Considerations ergonomiques et accessibilite
 
-Le jeu cible des enfants et adolescents. Le rayon de la zone cliquable de chaque personnage, defini dans le JSON d'annotation, est typiquement de trente pixels, ajustable par le developpeur lors de l'annotation pour eviter les recouvrements sur les planches denses. Les zones cliquables sont invisibles pour ne pas perturber le rendu.
+Le rayon de la zone cliquable de chaque personnage est defini dans le JSON d'annotation, typiquement trente pixels, ajustable pour eviter les recouvrements. Les zones cliquables sont invisibles. Le zoom permet de viser precisement les petits visages sur les planches denses, ce qui est necessaire et a ete confirme indispensable lors des tests.
 
-Les retours visuels (point vert ou rouge) sont accompagnes de retours sonores discrets et distincts, et de retours haptiques courts (vibration breve pour un tap correct, un peu plus longue pour un tap incorrect). Ces retours peuvent etre desactives dans les parametres.
-
-Les couleurs des points respectent un contraste suffisant pour les patients avec perception alteree des couleurs : vert vif avec icone de validation, rouge vif avec icone de croix.
-
-L'orientation paysage est forcee comme pour le reste de l'application. La planche est concue pour etre lue confortablement sur l'ecran douze pouces de la Lenovo Tab P12.
+Les couleurs des marqueurs respectent un contraste suffisant, vert avec icone de validation et rouge avec icone de croix. L'orientation est verrouillee en paysage. Les retours sonores et haptiques sont une amelioration future non incluse dans cette version.
 
 ## Tests prevus
 
-Les tests unitaires couvrent le chargement et le parsing du JSON d'annotation (lecture de tous les personnages, validation des emotions, coherence des coordonnees avec la taille de la planche), la detection de tap (un tap aux bonnes coordonnees touche le bon personnage, un tap a cote ne touche rien, un tap sur un personnage deja trouve n'est pas compte deux fois), le calcul de score sur divers cas, et la logique de fin de partie dans ses trois modes.
+Les tests unitaires couvrent le chargement et le parsing des planches, la detection de tap, le suivi des compteurs par emotion, la logique de changement d'emotion cible, le calcul de score par emotion et global, la logique de fin de planche conditionnelle au tableau de selection, et la gestion d'une seance a plusieurs planches.
 
-Les tests de widget couvrent l'ecran de configuration de partie, l'affichage de la planche et la reaction aux taps simules, l'ecran de transition, et l'ecran recapitulatif de fin de seance.
+Les tests de widget couvrent l'ecran de choix de planche, l'ecran de jeu avec la barre laterale et la simulation de taps sur l'emotion courante, le changement d'emotion, le tableau de selection en cas de planche incomplete, l'ecran de resultat et le recapitulatif de seance.
 
-Le test manuel sur Lenovo Tab P12 couvre l'ergonomie reelle, la fluidite d'affichage des planches denses, la lisibilite des emotions a taille reelle, la qualite des retours sensoriels, et l'experience globale d'une seance complete avec plusieurs parties et transfert final.
+Le test manuel sur Lenovo Tab P12 couvre l'ergonomie reelle de la barre laterale, la lisibilite des compteurs, la fluidite du zoom, la persistance des marqueurs, et le deroulement complet d'une seance a plusieurs planches avec transfert final au PC.
 
 ## Risques identifies
 
-Le risque de qualite des planches generees par ChatGPT est maitrise puisque les quatre planches sont deja produites, annotees et integrees.
-
-Le risque de performance d'affichage d'une grande image scrollable sur la Tab P12 doit etre verifie tot dans l'implementation. Une image JPG de 800 kilo-octets devrait s'afficher de maniere fluide, mais en cas de ralentissement on pourra redimensionner les planches a une resolution adaptee a l'ecran.
-
-Le risque de justesse de l'annotation manuelle subsiste : un visage mal etiquete introduirait un biais. L'outil HTML permet de relire les annotations avant export. Une verification visuelle des planches dans le jeu permettra de detecter d'eventuelles erreurs.
-
-Le risque d'equilibrage du scoring est gere par une variable de configuration centralisee permettant d'ajuster le facteur de penalite et les seuils d'etoiles sans toucher au code metier, apres les premiers tests reels.
+Le risque principal de cette refonte est l'ergonomie de la barre laterale sur l'ecran de la tablette, a valider en condition reelle. Le risque de justesse des annotations subsiste et fait l'objet d'un mode de verification visuelle des planches. L'equilibrage du scoring reste ajustable via la configuration centralisee apres les premiers tests reels.

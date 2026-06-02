@@ -1,5 +1,7 @@
 # ADR-08 - Planches scenes pre-dessinees pour le jeu des emotions
 
+> Note : la section de cet ADR concernant le mode de jeu (une emotion par partie) est superseded par l'ADR-10 qui introduit la navigation libre entre emotions. Le reste de cet ADR, concernant les planches scenes pre-dessinees, leur production, leur annotation et leur format, demeure valide.
+
 ## Contexte
 
 La specification initiale du jeu des emotions, redigee avant le sprint 3 et mise a jour apres le recalibrage de l'ADR-07, prevoyait une mecanique de composition de planche a la volee. Le principe etait de stocker une banque de visages individuels (huit variantes par emotion, format PNG transparent) et de composer dynamiquement chaque planche en tirant aleatoirement les visages selon le niveau de difficulte.
