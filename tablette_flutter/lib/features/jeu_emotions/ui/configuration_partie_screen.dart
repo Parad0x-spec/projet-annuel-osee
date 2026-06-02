@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/textes.dart';
 import '../controller.dart';
 import '../data.dart';
-import '../domain.dart';
 
 class ConfigurationPartieScreen extends ConsumerStatefulWidget {
   const ConfigurationPartieScreen({super.key});
@@ -18,24 +17,18 @@ class ConfigurationPartieScreen extends ConsumerStatefulWidget {
 class _ConfigurationPartieScreenState
     extends ConsumerState<ConfigurationPartieScreen> {
   int? _planche;
-  String? _emotion;
   bool _lancementEnCours = false;
 
   static const List<int> _numerosPlanches = <int>[1, 2, 3, 4];
-  static const List<String> _emotions = <String>[
-    emotionJoie,
-    emotionColere,
-    emotionTristesse,
-    emotionPeur,
-  ];
 
   Future<void> _lancer() async {
-    if (_planche == null || _emotion == null) return;
+    final planche = _planche;
+    if (planche == null) return;
     setState(() => _lancementEnCours = true);
     try {
       await ref
-          .read(controleurPartieProvider.notifier)
-          .demarrerPartie(numeroPlanche: _planche!, emotion: _emotion!);
+          .read(controleurPlancheProvider.notifier)
+          .demarrerPlanche(planche);
       if (!mounted) return;
       context.go('/jeu');
     } on PlancheInvalideException {
@@ -55,32 +48,21 @@ class _ConfigurationPartieScreenState
         appBar: AppBar(title: const Text(Textes.titreConfigurationPartie)),
         body: SafeArea(
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  Textes.messageAucunPatientCharge,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: 360,
-                  height: 96,
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/'),
-                    child: const Text(Textes.boutonRetourAccueil,
-                        style: TextStyle(fontSize: 22)),
-                  ),
-                ),
-              ],
+            child: SizedBox(
+              width: 360,
+              height: 96,
+              child: ElevatedButton(
+                onPressed: () => context.go('/'),
+                child: const Text(Textes.boutonRetourAccueil,
+                    style: TextStyle(fontSize: 22)),
+              ),
             ),
           ),
         ),
       );
     }
 
-    final pretALancer =
-        _planche != null && _emotion != null && !_lancementEnCours;
+    final pretALancer = _planche != null && !_lancementEnCours;
 
     return Scaffold(
       appBar: AppBar(title: const Text(Textes.titreConfigurationPartie)),
@@ -89,7 +71,7 @@ class _ConfigurationPartieScreenState
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+            children: <Widget>[
               Text(
                 Textes.consignePlanche,
                 style: Theme.of(context).textTheme.titleLarge,
@@ -122,40 +104,6 @@ class _ConfigurationPartieScreenState
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 32),
-              Text(
-                Textes.consigneEmotion,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: _emotions.map((e) {
-                  final selectionne = _emotion == e;
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: SizedBox(
-                        height: 96,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: selectionne
-                                ? Colors.orange
-                                : Colors.grey.shade200,
-                            foregroundColor:
-                                selectionne ? Colors.white : Colors.black,
-                          ),
-                          onPressed: () => setState(() => _emotion = e),
-                          child: Text(
-                            Textes.libelleEmotion(e),
-                            style: const TextStyle(fontSize: 22),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
               const Spacer(),
               Center(
                 child: SizedBox(
@@ -172,7 +120,6 @@ class _ConfigurationPartieScreenState
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         ),

@@ -11,16 +11,16 @@ class TransitionPartieScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parties = ref.watch(partiesSeanceProvider);
+    final planches = ref.watch(planchesSeanceProvider);
     final etatSession = ref.watch(sessionEnCoursProvider);
     final estDemo = etatSession is PatientCharge && etatSession.session.estDemo;
     return Scaffold(
       appBar: AppBar(title: const Text(Textes.titreTransitionPartie)),
       body: SafeArea(
         child: Center(
-          child: parties.isEmpty
+          child: planches.isEmpty
               ? _vueAucunePartie(context)
-              : _vueResultat(context, ref, parties.last, estDemo),
+              : _vueResultat(context, ref, planches.last, estDemo),
         ),
       ),
     );
@@ -57,10 +57,10 @@ class TransitionPartieScreen extends ConsumerWidget {
   Widget _vueResultat(
     BuildContext context,
     WidgetRef ref,
-    Partie partie,
+    PlancheJouee planche,
     bool estDemo,
   ) {
-    final etoiles = calculerEtoiles(partie.score);
+    final etoiles = calculerEtoiles(planche.scoreGlobal);
     final message = _messageSelonEtoiles(etoiles);
     return Padding(
       padding: const EdgeInsets.all(24),

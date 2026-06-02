@@ -52,7 +52,7 @@ class ControleurSession extends Notifier<EtatSession> {
   }
 
   void reinitialiser() {
-    ref.read(partiesSeanceProvider.notifier).vider();
+    ref.read(planchesSeanceProvider.notifier).vider();
     state = const AucunPatientCharge();
     _effacerContexte();
   }
@@ -78,57 +78,80 @@ class ControleurSession extends Notifier<EtatSession> {
 final sessionEnCoursProvider =
     NotifierProvider<ControleurSession, EtatSession>(ControleurSession.new);
 
-class ControleurPartiesSeance extends Notifier<List<Partie>> {
+class ControleurPlanchesSeance extends Notifier<List<PlancheJouee>> {
   @override
-  List<Partie> build() => const <Partie>[];
+  List<PlancheJouee> build() => const <PlancheJouee>[];
 
-  void ajouter(Partie partie) {
-    state = <Partie>[...state, partie];
+  void ajouter(PlancheJouee planche) {
+    state = <PlancheJouee>[...state, planche];
   }
 
   void vider() {
-    state = const <Partie>[];
+    state = const <PlancheJouee>[];
   }
 }
 
-final partiesSeanceProvider =
-    NotifierProvider<ControleurPartiesSeance, List<Partie>>(
-      ControleurPartiesSeance.new,
+final planchesSeanceProvider =
+    NotifierProvider<ControleurPlanchesSeance, List<PlancheJouee>>(
+      ControleurPlanchesSeance.new,
     );
 
-class MoteurPartie {
+class MoteurPlanche {
   final Planche planche;
   final int numeroPlanche;
-  final String emotionCible;
   final int Function() horlogeMs;
 
-  final Set<int> _indicesTrouves = <int>{};
+  final Map<String, Set<int>> _trouvesParEmotion = <String, Set<int>>{};
+  final Map<String, int> _fauxPositifsParEmotion = <String, int>{};
   final List<Tap> _taps = <Tap>[];
-  int _nbFauxPositifs = 0;
   late final int _tempsDebutMs;
-  late final int _nbCiblesTotal;
+  String? _emotionCible;
 
-  MoteurPartie({
+  MoteurPlanche({
     required this.planche,
     required this.numeroPlanche,
-    required this.emotionCible,
     required this.horlogeMs,
   }) {
     _tempsDebutMs = horlogeMs();
-    _nbCiblesTotal = planche.nombreCiblesPourEmotion(emotionCible);
+    for (final emotion in emotionsOrdonnees) {
+      _trouvesParEmotion[emotion] = <int>{};
+      _fauxPositifsParEmotion[emotion] = 0;
+    }
   }
 
-  int get nbCiblesTotal => _nbCiblesTotal;
-  int get nbCiblesTrouvees => _indicesTrouves.length;
-  int get nbFauxPositifs => _nbFauxPositifs;
-  Set<int> get indicesTrouves => Set.unmodifiable(_indicesTrouves);
+  String? get emotionCible => _emotionCible;
   List<Tap> get taps => List.unmodifiable(_taps);
-  bool get toutesCiblesTrouvees =>
-      _nbCiblesTotal > 0 && _indicesTrouves.length == _nbCiblesTotal;
+
+  int nbCiblesTotal(String emotion) =>
+      planche.nombreCiblesPourEmotion(emotion);
+  int nbCiblesTrouvees(String emotion) =>
+      _trouvesParEmotion[emotion]?.length ?? 0;
+  int nbFauxPositifs(String emotion) => _fauxPositifsParEmotion[emotion] ?? 0;
+  Set<int> indicesTrouves(String emotion) =>
+      Set.unmodifiable(_trouvesParEmotion[emotion] ?? const <int>{});
+
+  void changerEmotionCible(String emotion) {
+    _emotionCible = emotion;
+  }
+
+  bool resteDesCibles() {
+    for (final emotion in emotionsOrdonnees) {
+      if (nbCiblesTrouvees(emotion) < nbCiblesTotal(emotion)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool toutesEmotionsCompletes() => !resteDesCibles();
 
   ResultatTap taper(int tapX, int tapY) {
-    final maintenant = horlogeMs();
-    final tempsMs = maintenant - _tempsDebutMs;
+    final emotionCourante = _emotionCible;
+    if (emotionCourante == null) {
+      return const ResultatTap.aucun();
+    }
+
+    final tempsMs = horlogeMs() - _tempsDebutMs;
     int? indexTouche;
     for (var i = 0; i < planche.personnages.length; i++) {
       if (estDansZone(tapX, tapY, planche.personnages[i])) {
@@ -151,10 +174,11 @@ class MoteurPartie {
     }
 
     final perso = planche.personnages[indexTouche];
-    if (perso.emotion == emotionCible) {
-      final dejaTrouvee = _indicesTrouves.contains(indexTouche);
+    if (perso.emotion == emotionCourante) {
+      final trouves = _trouvesParEmotion[emotionCourante]!;
+      final dejaTrouvee = trouves.contains(indexTouche);
       if (!dejaTrouvee) {
-        _indicesTrouves.add(indexTouche);
+        trouves.add(indexTouche);
       }
       _taps.add(
         Tap(
@@ -165,9 +189,13 @@ class MoteurPartie {
           correct: true,
         ),
       );
-      return ResultatTap.cible(indexPersonnage: indexTouche, dejaTrouvee: dejaTrouvee);
+      return ResultatTap.cible(
+        indexPersonnage: indexTouche,
+        dejaTrouvee: dejaTrouvee,
+      );
     } else {
-      _nbFauxPositifs += 1;
+      _fauxPositifsParEmotion[emotionCourante] =
+          (_fauxPositifsParEmotion[emotionCourante] ?? 0) + 1;
       _taps.add(
         Tap(
           timestampMs: tempsMs,
@@ -181,25 +209,39 @@ class MoteurPartie {
     }
   }
 
-  Partie terminer(ModeFin modeFin) {
-    final tempsTotalMs = horlogeMs() - _tempsDebutMs;
-    final nbTrouvees = _indicesTrouves.length;
-    final nbRatees = _nbCiblesTotal - nbTrouvees;
+  ResultatEmotion resultatPourEmotion(
+    String emotion, {
+    required bool evaluee,
+  }) {
+    final total = nbCiblesTotal(emotion);
+    final trouvees = nbCiblesTrouvees(emotion);
+    final fauxPositifs = nbFauxPositifs(emotion);
     final score = calculerScore(
-      T: nbTrouvees,
-      R: nbRatees,
-      F: _nbFauxPositifs,
+      T: trouvees,
+      R: total - trouvees,
+      F: fauxPositifs,
     );
-    return Partie(
-      emotionCible: emotionCible,
-      numeroPlanche: numeroPlanche,
-      nbCiblesTotal: _nbCiblesTotal,
-      nbCiblesTrouvees: nbTrouvees,
-      nbFauxPositifs: _nbFauxPositifs,
-      nbCiblesRatees: nbRatees,
-      tempsTotalMs: tempsTotalMs,
-      modeFin: modeFin,
+    return ResultatEmotion(
+      emotion: emotion,
+      nbCiblesTotal: total,
+      nbCiblesTrouvees: trouvees,
+      nbFauxPositifs: fauxPositifs,
       score: score,
+      evaluee: evaluee,
+    );
+  }
+
+  PlancheJouee terminerPlanche(List<String> emotionsRetenues) {
+    final retenues = emotionsRetenues.toSet();
+    final resultats = emotionsOrdonnees
+        .map((emotion) =>
+            resultatPourEmotion(emotion, evaluee: retenues.contains(emotion)))
+        .toList();
+    final evalues = resultats.where((resultat) => resultat.evaluee).toList();
+    return PlancheJouee(
+      numeroPlanche: numeroPlanche,
+      resultatsParEmotion: resultats,
+      scoreGlobal: calculerScoreGlobal(evalues),
     );
   }
 }
@@ -233,73 +275,79 @@ class ResultatFauxPositif extends ResultatTap {
   const ResultatFauxPositif({required this.indexPersonnage});
 }
 
-sealed class EtatPartie {
-  const EtatPartie();
+sealed class EtatPlanche {
+  const EtatPlanche();
 }
 
-class AucunePartie extends EtatPartie {
-  const AucunePartie();
+class AucunePlanche extends EtatPlanche {
+  const AucunePlanche();
 }
 
-class PartieEnCours extends EtatPartie {
-  final MoteurPartie moteur;
-  const PartieEnCours(this.moteur);
+class PlancheEnCours extends EtatPlanche {
+  final MoteurPlanche moteur;
+  const PlancheEnCours(this.moteur);
 }
 
-class ControleurPartie extends Notifier<EtatPartie> {
+class ControleurPlanche extends Notifier<EtatPlanche> {
   DateTime Function() horloge = DateTime.now;
 
   @override
-  EtatPartie build() => const AucunePartie();
+  EtatPlanche build() => const AucunePlanche();
 
-  Future<void> demarrerPartie({
-    required int numeroPlanche,
-    required String emotion,
-  }) async {
+  Future<void> demarrerPlanche(int numeroPlanche) async {
     final planche = await chargerPlanche(numeroPlanche);
     chargerMoteur(
-      MoteurPartie(
+      MoteurPlanche(
         planche: planche,
         numeroPlanche: numeroPlanche,
-        emotionCible: emotion,
         horlogeMs: () => horloge().millisecondsSinceEpoch,
       ),
     );
   }
 
-  void chargerMoteur(MoteurPartie moteur) {
-    state = PartieEnCours(moteur);
+  void chargerMoteur(MoteurPlanche moteur) {
+    state = PlancheEnCours(moteur);
+  }
+
+  void changerEmotionCible(String emotion) {
+    final etatCourant = state;
+    if (etatCourant is! PlancheEnCours) {
+      throw const PlancheNonDemarreeException();
+    }
+    etatCourant.moteur.changerEmotionCible(emotion);
+    state = PlancheEnCours(etatCourant.moteur);
   }
 
   ResultatTap taper(int tapX, int tapY) {
     final etatCourant = state;
-    if (etatCourant is! PartieEnCours) {
-      throw const PartieNonDemarreeException();
+    if (etatCourant is! PlancheEnCours) {
+      throw const PlancheNonDemarreeException();
     }
     final resultat = etatCourant.moteur.taper(tapX, tapY);
-    state = PartieEnCours(etatCourant.moteur);
+    state = PlancheEnCours(etatCourant.moteur);
     return resultat;
   }
 
-  Partie terminer(ModeFin modeFin) {
+  PlancheJouee terminerPlanche(List<String> emotionsRetenues) {
     final etatCourant = state;
-    if (etatCourant is! PartieEnCours) {
-      throw const PartieNonDemarreeException();
+    if (etatCourant is! PlancheEnCours) {
+      throw const PlancheNonDemarreeException();
     }
-    final partie = etatCourant.moteur.terminer(modeFin);
-    ref.read(partiesSeanceProvider.notifier).ajouter(partie);
-    state = const AucunePartie();
-    return partie;
+    final plancheJouee =
+        etatCourant.moteur.terminerPlanche(emotionsRetenues);
+    ref.read(planchesSeanceProvider.notifier).ajouter(plancheJouee);
+    state = const AucunePlanche();
+    return plancheJouee;
   }
 }
 
-final controleurPartieProvider =
-    NotifierProvider<ControleurPartie, EtatPartie>(ControleurPartie.new);
+final controleurPlancheProvider =
+    NotifierProvider<ControleurPlanche, EtatPlanche>(ControleurPlanche.new);
 
-class PartieNonDemarreeException implements Exception {
-  const PartieNonDemarreeException();
+class PlancheNonDemarreeException implements Exception {
+  const PlancheNonDemarreeException();
   @override
-  String toString() => 'PartieNonDemarreeException';
+  String toString() => 'PlancheNonDemarreeException';
 }
 
 typedef OuvrirScanner = Future<String?> Function(BuildContext context);
@@ -390,7 +438,7 @@ class AppairageIntrouvableException implements Exception {
 
 Future<EnveloppeQr> construireExportSession({
   required EtatSession etat,
-  required List<Partie> parties,
+  required List<PlancheJouee> planches,
   required Appairage? appairage,
   DateTime? horodatage,
 }) {
@@ -408,7 +456,7 @@ Future<EnveloppeQr> construireExportSession({
     patientInitiales: patient.patientInitiales,
     sessionDate: maintenant,
     niveauDemande: patient.niveauDemande,
-    parties: parties,
+    planchesJouees: planches,
   );
 
   return construireQrSession(
@@ -421,10 +469,10 @@ Future<EnveloppeQr> construireExportSession({
 Future<EnveloppeQr> exporterSession(Ref ref, {DateTime? horodatage}) async {
   final appairage = await ref.read(appairageActuelProvider.future);
   final etat = ref.read(sessionEnCoursProvider);
-  final parties = ref.read(partiesSeanceProvider);
+  final planches = ref.read(planchesSeanceProvider);
   return construireExportSession(
     etat: etat,
-    parties: parties,
+    planches: planches,
     appairage: appairage,
     horodatage: horodatage,
   );

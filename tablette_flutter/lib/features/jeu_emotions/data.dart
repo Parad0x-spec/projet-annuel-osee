@@ -54,7 +54,8 @@ Map<String, dynamic> serialiserPayloadSession(Session session) {
     'session_date': session.sessionDate.toUtc().toIso8601String(),
     'jeu_type': jeuTypeEmotions,
     'niveau': session.niveauDemande,
-    'parties': session.parties.map((partie) => partie.versJson()).toList(),
+    'planches':
+        session.planchesJouees.map((planche) => planche.versJson()).toList(),
   };
 }
 

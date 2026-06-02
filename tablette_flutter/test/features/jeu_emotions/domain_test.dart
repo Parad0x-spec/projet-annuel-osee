@@ -87,54 +87,101 @@ void main() {
     });
   });
 
-  group('modeFinVersString', () {
-    test('mappe les trois modes vers les chaines attendues', () {
-      expect(modeFinVersString(ModeFin.termineeBouton), 'bouton');
-      expect(modeFinVersString(ModeFin.termineeAuto), 'auto');
-      expect(modeFinVersString(ModeFin.abandonnee), 'abandon');
-    });
-  });
-
-  group('emotionsValides', () {
-    test('contient exactement les 4 emotions du concept definitif', () {
+  group('emotionsValides et emotionsOrdonnees', () {
+    test('contiennent exactement les 4 emotions du concept definitif', () {
       expect(emotionsValides, <String>{'joie', 'colere', 'tristesse', 'peur'});
+      expect(emotionsOrdonnees, <String>[
+        'joie',
+        'colere',
+        'tristesse',
+        'peur',
+      ]);
     });
   });
 
-  group('Partie.versJson', () {
+  group('calculerScoreGlobal', () {
+    test('moyenne arrondie des scores des emotions evaluees', () {
+      const resultats = <ResultatEmotion>[
+        ResultatEmotion(
+          emotion: 'joie',
+          nbCiblesTotal: 2,
+          nbCiblesTrouvees: 2,
+          nbFauxPositifs: 0,
+          score: 100,
+          evaluee: true,
+        ),
+        ResultatEmotion(
+          emotion: 'colere',
+          nbCiblesTotal: 2,
+          nbCiblesTrouvees: 1,
+          nbFauxPositifs: 0,
+          score: 50,
+          evaluee: true,
+        ),
+      ];
+      expect(calculerScoreGlobal(resultats), 75);
+    });
+
+    test('liste vide donne 0 par convention', () {
+      expect(calculerScoreGlobal(const <ResultatEmotion>[]), 0);
+    });
+  });
+
+  group('ResultatEmotion.versJson', () {
     test('serialise tous les champs dans un ordre canonique', () {
-      const partie = Partie(
-        emotionCible: 'colere',
-        numeroPlanche: 2,
+      const resultat = ResultatEmotion(
+        emotion: 'colere',
         nbCiblesTotal: 4,
         nbCiblesTrouvees: 3,
         nbFauxPositifs: 1,
-        nbCiblesRatees: 1,
-        tempsTotalMs: 45000,
-        modeFin: ModeFin.termineeBouton,
         score: 70,
+        evaluee: true,
       );
-      final json = partie.versJson();
+      final json = resultat.versJson();
       expect(json.keys.toList(), <String>[
-        'emotion_cible',
-        'numero_planche',
+        'emotion',
         'nb_cibles_total',
         'nb_cibles_trouvees',
         'nb_faux_positifs',
-        'nb_cibles_ratees',
-        'temps_total_ms',
-        'mode_fin',
         'score',
+        'evaluee',
       ]);
-      expect(json['emotion_cible'], 'colere');
-      expect(json['numero_planche'], 2);
+      expect(json['emotion'], 'colere');
       expect(json['nb_cibles_total'], 4);
       expect(json['nb_cibles_trouvees'], 3);
       expect(json['nb_faux_positifs'], 1);
-      expect(json['nb_cibles_ratees'], 1);
-      expect(json['temps_total_ms'], 45000);
-      expect(json['mode_fin'], 'bouton');
       expect(json['score'], 70);
+      expect(json['evaluee'], isTrue);
+    });
+  });
+
+  group('PlancheJouee.versJson', () {
+    test('serialise numero, score global et resultats par emotion', () {
+      const planche = PlancheJouee(
+        numeroPlanche: 2,
+        scoreGlobal: 80,
+        resultatsParEmotion: <ResultatEmotion>[
+          ResultatEmotion(
+            emotion: 'joie',
+            nbCiblesTotal: 2,
+            nbCiblesTrouvees: 2,
+            nbFauxPositifs: 0,
+            score: 100,
+            evaluee: true,
+          ),
+        ],
+      );
+      final json = planche.versJson();
+      expect(json.keys.toList(), <String>[
+        'numero_planche',
+        'score_global',
+        'resultats_par_emotion',
+      ]);
+      expect(json['numero_planche'], 2);
+      expect(json['score_global'], 80);
+      final resultats = json['resultats_par_emotion'] as List<dynamic>;
+      expect(resultats, hasLength(1));
+      expect((resultats.first as Map<String, dynamic>)['emotion'], 'joie');
     });
   });
 }

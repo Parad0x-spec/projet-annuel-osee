@@ -47,6 +47,13 @@ const String emotionColere = 'colere';
 const String emotionTristesse = 'tristesse';
 const String emotionPeur = 'peur';
 
+const List<String> emotionsOrdonnees = <String>[
+  emotionJoie,
+  emotionColere,
+  emotionTristesse,
+  emotionPeur,
+];
+
 const Set<String> emotionsValides = <String>{
   emotionJoie,
   emotionColere,
@@ -112,52 +119,49 @@ class Tap {
   });
 }
 
-enum ModeFin { termineeBouton, termineeAuto, abandonnee }
-
-String modeFinVersString(ModeFin mode) {
-  switch (mode) {
-    case ModeFin.termineeBouton:
-      return 'bouton';
-    case ModeFin.termineeAuto:
-      return 'auto';
-    case ModeFin.abandonnee:
-      return 'abandon';
-  }
-}
-
-class Partie {
-  final String emotionCible;
-  final int numeroPlanche;
+class ResultatEmotion {
+  final String emotion;
   final int nbCiblesTotal;
   final int nbCiblesTrouvees;
   final int nbFauxPositifs;
-  final int nbCiblesRatees;
-  final int tempsTotalMs;
-  final ModeFin modeFin;
   final int score;
+  final bool evaluee;
 
-  const Partie({
-    required this.emotionCible,
-    required this.numeroPlanche,
+  const ResultatEmotion({
+    required this.emotion,
     required this.nbCiblesTotal,
     required this.nbCiblesTrouvees,
     required this.nbFauxPositifs,
-    required this.nbCiblesRatees,
-    required this.tempsTotalMs,
-    required this.modeFin,
     required this.score,
+    required this.evaluee,
   });
 
   Map<String, dynamic> versJson() => <String, dynamic>{
-    'emotion_cible': emotionCible,
-    'numero_planche': numeroPlanche,
+    'emotion': emotion,
     'nb_cibles_total': nbCiblesTotal,
     'nb_cibles_trouvees': nbCiblesTrouvees,
     'nb_faux_positifs': nbFauxPositifs,
-    'nb_cibles_ratees': nbCiblesRatees,
-    'temps_total_ms': tempsTotalMs,
-    'mode_fin': modeFinVersString(modeFin),
     'score': score,
+    'evaluee': evaluee,
+  };
+}
+
+class PlancheJouee {
+  final int numeroPlanche;
+  final List<ResultatEmotion> resultatsParEmotion;
+  final int scoreGlobal;
+
+  const PlancheJouee({
+    required this.numeroPlanche,
+    required this.resultatsParEmotion,
+    required this.scoreGlobal,
+  });
+
+  Map<String, dynamic> versJson() => <String, dynamic>{
+    'numero_planche': numeroPlanche,
+    'score_global': scoreGlobal,
+    'resultats_par_emotion':
+        resultatsParEmotion.map((resultat) => resultat.versJson()).toList(),
   };
 }
 
@@ -166,15 +170,26 @@ class Session {
   final String patientInitiales;
   final DateTime sessionDate;
   final int niveauDemande;
-  final List<Partie> parties;
+  final List<PlancheJouee> planchesJouees;
 
   const Session({
     required this.patientId,
     required this.patientInitiales,
     required this.sessionDate,
     required this.niveauDemande,
-    required this.parties,
+    required this.planchesJouees,
   });
+}
+
+int calculerScoreGlobal(List<ResultatEmotion> resultatsEvalues) {
+  if (resultatsEvalues.isEmpty) {
+    return 0;
+  }
+  final somme = resultatsEvalues.fold<int>(
+    0,
+    (acc, resultat) => acc + resultat.score,
+  );
+  return (somme / resultatsEvalues.length).round();
 }
 
 int calculerScore({required int T, required int R, required int F}) {

@@ -10,7 +10,7 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parties = ref.watch(partiesSeanceProvider);
+    final planches = ref.watch(planchesSeanceProvider);
     final etatSession = ref.watch(sessionEnCoursProvider);
     final estDemo = etatSession is PatientCharge && etatSession.session.estDemo;
 
@@ -23,7 +23,7 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Expanded(
-                child: parties.isEmpty
+                child: planches.isEmpty
                     ? Center(
                         child: Text(
                           Textes.messageAucunePartieJouee,
@@ -31,9 +31,9 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
                         ),
                       )
                     : ListView.builder(
-                        itemCount: parties.length,
+                        itemCount: planches.length,
                         itemBuilder: (ctx, i) {
-                          final p = parties[i];
+                          final p = planches[i];
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 6),
                             child: Padding(
@@ -42,12 +42,10 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
                                 horizontal: 20,
                               ),
                               child: Text(
-                                Textes.partieResume(
+                                Textes.plancheResume(
                                   numero: i + 1,
                                   numeroPlanche: p.numeroPlanche,
-                                  emotionLibelle:
-                                      Textes.libelleEmotion(p.emotionCible),
-                                  score: p.score,
+                                  scoreGlobal: p.scoreGlobal,
                                 ),
                                 style:
                                     Theme.of(context).textTheme.titleMedium,
@@ -81,7 +79,7 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
                     width: 320,
                     height: 96,
                     child: ElevatedButton(
-                      onPressed: (parties.isEmpty || estDemo)
+                      onPressed: (planches.isEmpty || estDemo)
                           ? null
                           : () => context.go('/export-session'),
                       child: const Text(

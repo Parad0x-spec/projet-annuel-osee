@@ -37,7 +37,7 @@ void main() {
 
       final enveloppeQr = await construireExportSession(
         etat: _etatCharge(),
-        parties: const <Partie>[],
+        planches: const <PlancheJouee>[],
         appairage: appairage,
       );
 
@@ -48,7 +48,7 @@ void main() {
       expect(payload['patient_initiales'], 'MD');
       expect(payload['niveau'], 4);
       expect(payload['jeu_type'], 'emotions');
-      expect(payload['parties'], isEmpty);
+      expect(payload['planches'], isEmpty);
 
       final octetsASigner = utf8.encode(
         ConstructeurEnveloppe.serialiserPourSignature(
@@ -69,7 +69,7 @@ void main() {
       expect(
         () => construireExportSession(
           etat: const AucunPatientCharge(),
-          parties: const <Partie>[],
+          planches: const <PlancheJouee>[],
           appairage: null,
         ),
         throwsA(isA<AucunPatientChargeException>()),
@@ -81,43 +81,50 @@ void main() {
       expect(
         () => construireExportSession(
           etat: _etatCharge(),
-          parties: const <Partie>[],
+          planches: const <PlancheJouee>[],
           appairage: null,
         ),
         throwsA(isA<AppairageIntrouvableException>()),
       );
     });
 
-    test('inclut les parties accumulees dans le payload', () async {
+    test('inclut les planches jouees structurees par emotion dans le payload',
+        () async {
       final appairage = await _appairageTest();
-      const partie = Partie(
-        emotionCible: 'joie',
+      const planche = PlancheJouee(
         numeroPlanche: 2,
-        nbCiblesTotal: 4,
-        nbCiblesTrouvees: 3,
-        nbFauxPositifs: 1,
-        nbCiblesRatees: 1,
-        tempsTotalMs: 30000,
-        modeFin: ModeFin.termineeBouton,
-        score: 70,
+        scoreGlobal: 70,
+        resultatsParEmotion: <ResultatEmotion>[
+          ResultatEmotion(
+            emotion: 'joie',
+            nbCiblesTotal: 4,
+            nbCiblesTrouvees: 3,
+            nbFauxPositifs: 1,
+            score: 70,
+            evaluee: true,
+          ),
+        ],
       );
 
       final enveloppeQr = await construireExportSession(
         etat: _etatCharge(),
-        parties: const <Partie>[partie],
+        planches: const <PlancheJouee>[planche],
         appairage: appairage,
       );
 
       final enveloppe =
           jsonDecode(enveloppeQr.enveloppeJSON) as Map<String, dynamic>;
       final payload = enveloppe['payload'] as Map<String, dynamic>;
-      final parties = payload['parties'] as List<dynamic>;
-      expect(parties, hasLength(1));
-      final p0 = parties[0] as Map<String, dynamic>;
-      expect(p0['emotion_cible'], 'joie');
+      final planches = payload['planches'] as List<dynamic>;
+      expect(planches, hasLength(1));
+      final p0 = planches[0] as Map<String, dynamic>;
       expect(p0['numero_planche'], 2);
-      expect(p0['score'], 70);
-      expect(p0['mode_fin'], 'bouton');
+      expect(p0['score_global'], 70);
+      final resultats = p0['resultats_par_emotion'] as List<dynamic>;
+      final r0 = resultats.first as Map<String, dynamic>;
+      expect(r0['emotion'], 'joie');
+      expect(r0['score'], 70);
+      expect(r0['evaluee'], isTrue);
     });
   });
 

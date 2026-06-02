@@ -91,6 +91,14 @@ class Textes {
     required int score,
   }) =>
       'Partie $numero — Planche $numeroPlanche, ${emotionLibelle.toLowerCase()} — score $score / 100';
+  static String plancheResume({
+    required int numero,
+    required int numeroPlanche,
+    required int scoreGlobal,
+  }) =>
+      'Planche jouée $numero — Planche $numeroPlanche — score $scoreGlobal / 100';
+  static const String consigneSelectionnerEmotion =
+      'Sélectionne une émotion dans la liste.';
   static const String boutonGenererQrSession = 'Générer le QR de séance';
   static const String boutonQuitterSansTransferer = 'Quitter sans transférer';
 
