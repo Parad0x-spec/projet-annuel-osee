@@ -345,10 +345,6 @@ class ControleurPlanche extends Notifier<EtatPlanche> {
     state = const AucunePlanche();
     return plancheJouee;
   }
-
-  void abandonnerPlanche() {
-    state = const AucunePlanche();
-  }
 }
 
 final controleurPlancheProvider =

@@ -29,6 +29,30 @@ PlancheJouee _planche({
           score: 100,
           evaluee: true,
         ),
+        ResultatEmotion(
+          emotion: 'colere',
+          nbCiblesTotal: 4,
+          nbCiblesTrouvees: 3,
+          nbFauxPositifs: 0,
+          score: 75,
+          evaluee: true,
+        ),
+        ResultatEmotion(
+          emotion: 'tristesse',
+          nbCiblesTotal: 2,
+          nbCiblesTrouvees: 2,
+          nbFauxPositifs: 0,
+          score: 100,
+          evaluee: true,
+        ),
+        ResultatEmotion(
+          emotion: 'peur',
+          nbCiblesTotal: 0,
+          nbCiblesTrouvees: 0,
+          nbFauxPositifs: 0,
+          score: 0,
+          evaluee: false,
+        ),
       ],
     );
 
@@ -63,7 +87,7 @@ Future<ProviderContainer> _monter(
 }
 
 void main() {
-  testWidgets('liste chaque planche jouee avec son score global',
+  testWidgets('liste chaque planche avec le detail par emotion et le score',
       (WidgetTester tester) async {
     await _monter(tester, <PlancheJouee>[
       _planche(numeroPlanche: 1, scoreGlobal: 80),
@@ -71,13 +95,17 @@ void main() {
     ]);
 
     expect(
-      find.text(Textes.plancheResume(
-          numero: 1, numeroPlanche: 1, scoreGlobal: 80)),
+      find.text(
+        'Planche 1 — Joie 2/2, Colère 3/4, Tristesse 2/2, '
+        'Peur non évaluée — score global 80 / 100',
+      ),
       findsOneWidget,
     );
     expect(
-      find.text(Textes.plancheResume(
-          numero: 2, numeroPlanche: 3, scoreGlobal: 55)),
+      find.text(
+        'Planche 2 — Joie 2/2, Colère 3/4, Tristesse 2/2, '
+        'Peur non évaluée — score global 55 / 100',
+      ),
       findsOneWidget,
     );
   });
@@ -111,7 +139,7 @@ void main() {
   );
 
   testWidgets(
-    'en mode demo le bouton Generer le QR de seance est desactive',
+    'en mode demo pas de generation QR mais un bouton Retour accueil',
     (WidgetTester tester) async {
       final container = await _monter(
         tester,
@@ -122,10 +150,15 @@ void main() {
       final etat = container.read(sessionEnCoursProvider) as PatientCharge;
       expect(etat.session.estDemo, isTrue);
 
-      final bouton = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, Textes.boutonGenererQrSession),
-      );
-      expect(bouton.onPressed, isNull);
+      expect(find.text(Textes.boutonGenererQrSession), findsNothing);
+      expect(find.text(Textes.boutonRetourAccueil), findsOneWidget);
+
+      await tester.tap(find.text(Textes.boutonRetourAccueil));
+      await tester.pumpAndSettle();
+
+      expect(find.text(Textes.titreAccueil), findsOneWidget);
+      expect(container.read(sessionEnCoursProvider), isA<AucunPatientCharge>());
+      expect(container.read(planchesSeanceProvider), isEmpty);
     },
   );
 

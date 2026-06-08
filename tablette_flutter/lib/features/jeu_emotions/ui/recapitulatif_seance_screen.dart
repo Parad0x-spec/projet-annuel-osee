@@ -4,9 +4,24 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/textes.dart';
 import '../controller.dart';
+import '../domain.dart';
 
 class RecapitulatifSeanceScreen extends ConsumerWidget {
   const RecapitulatifSeanceScreen({super.key});
+
+  void _retourAccueil(BuildContext context, WidgetRef ref) {
+    ref.read(sessionEnCoursProvider.notifier).reinitialiser();
+    context.go('/');
+  }
+
+  String _detailEmotions(PlancheJouee planche) => planche.resultatsParEmotion
+      .map((resultat) => Textes.fragmentEmotionRecap(
+            emotionLibelle: Textes.libelleEmotion(resultat.emotion),
+            trouvees: resultat.nbCiblesTrouvees,
+            total: resultat.nbCiblesTotal,
+            evaluee: resultat.evaluee,
+          ))
+      .join(', ');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,9 +57,9 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
                                 horizontal: 20,
                               ),
                               child: Text(
-                                Textes.plancheResume(
+                                Textes.plancheResumeDetaille(
                                   numero: i + 1,
-                                  numeroPlanche: p.numeroPlanche,
+                                  detailEmotions: _detailEmotions(p),
                                   scoreGlobal: p.scoreGlobal,
                                 ),
                                 style:
@@ -56,40 +71,49 @@ class RecapitulatifSeanceScreen extends ConsumerWidget {
                       ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  SizedBox(
-                    width: 320,
-                    height: 96,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        ref
-                            .read(sessionEnCoursProvider.notifier)
-                            .reinitialiser();
-                        context.go('/');
-                      },
-                      child: const Text(
-                        Textes.boutonQuitterSansTransferer,
-                        style: TextStyle(fontSize: 22),
+              estDemo
+                  ? Center(
+                      child: SizedBox(
+                        width: 320,
+                        height: 96,
+                        child: ElevatedButton(
+                          onPressed: () => _retourAccueil(context, ref),
+                          child: const Text(
+                            Textes.boutonRetourAccueil,
+                            style: TextStyle(fontSize: 22),
+                          ),
+                        ),
                       ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        SizedBox(
+                          width: 320,
+                          height: 96,
+                          child: OutlinedButton(
+                            onPressed: () => _retourAccueil(context, ref),
+                            child: const Text(
+                              Textes.boutonQuitterSansTransferer,
+                              style: TextStyle(fontSize: 22),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 320,
+                          height: 96,
+                          child: ElevatedButton(
+                            onPressed: planches.isEmpty
+                                ? null
+                                : () => context.go('/export-session'),
+                            child: const Text(
+                              Textes.boutonGenererQrSession,
+                              style: TextStyle(fontSize: 22),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(
-                    width: 320,
-                    height: 96,
-                    child: ElevatedButton(
-                      onPressed: (planches.isEmpty || estDemo)
-                          ? null
-                          : () => context.go('/export-session'),
-                      child: const Text(
-                        Textes.boutonGenererQrSession,
-                        style: TextStyle(fontSize: 22),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),

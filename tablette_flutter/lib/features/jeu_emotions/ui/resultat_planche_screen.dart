@@ -12,21 +12,14 @@ class ResultatPlancheScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final planches = ref.watch(planchesSeanceProvider);
-    final etatSession = ref.watch(sessionEnCoursProvider);
-    final estDemo = etatSession is PatientCharge && etatSession.session.estDemo;
     return Scaffold(
       appBar: AppBar(title: const Text(Textes.titreResultatPlanche)),
       body: SafeArea(
         child: planches.isEmpty
             ? _vueAucunePlanche(context)
-            : _vueResultat(context, ref, planches.last, estDemo),
+            : _vueResultat(context, planches.last),
       ),
     );
-  }
-
-  void _retourAccueil(BuildContext context, WidgetRef ref) {
-    ref.read(sessionEnCoursProvider.notifier).reinitialiser();
-    context.go('/');
   }
 
   Widget _vueAucunePlanche(BuildContext context) {
@@ -56,9 +49,7 @@ class ResultatPlancheScreen extends ConsumerWidget {
 
   Widget _vueResultat(
     BuildContext context,
-    WidgetRef ref,
     PlancheJouee planche,
-    bool estDemo,
   ) {
     final etoiles = calculerEtoiles(planche.scoreGlobal);
     final message = _messageSelonEtoiles(etoiles);
@@ -89,14 +80,10 @@ class ResultatPlancheScreen extends ConsumerWidget {
                 width: 320,
                 height: 96,
                 child: OutlinedButton(
-                  onPressed: estDemo
-                      ? () => _retourAccueil(context, ref)
-                      : () => context.go('/recapitulatif-seance'),
-                  child: Text(
-                    estDemo
-                        ? Textes.boutonRetourAccueil
-                        : Textes.boutonTerminerSeance,
-                    style: const TextStyle(fontSize: 22),
+                  onPressed: () => context.go('/recapitulatif-seance'),
+                  child: const Text(
+                    Textes.boutonTerminerSeance,
+                    style: TextStyle(fontSize: 22),
                   ),
                 ),
               ),

@@ -133,12 +133,16 @@ void main() {
   );
 
   testWidgets(
-    'en mode demo le bouton de fin propose le retour a l\'accueil',
+    'en mode demo Terminer la seance mene au recapitulatif complet',
     (WidgetTester tester) async {
       await _monter(tester, demo: true);
 
-      expect(find.text(Textes.boutonRetourAccueil), findsOneWidget);
-      expect(find.text(Textes.boutonTerminerSeance), findsNothing);
+      expect(find.text(Textes.boutonTerminerSeance), findsOneWidget);
+
+      await tester.tap(find.text(Textes.boutonTerminerSeance));
+      await tester.pumpAndSettle();
+
+      expect(find.text(Textes.titreRecapitulatifSeance), findsOneWidget);
     },
   );
 }

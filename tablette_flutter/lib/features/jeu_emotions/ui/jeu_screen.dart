@@ -110,35 +110,6 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
     );
   }
 
-  Future<void> _confirmerArret(bool estDemo) async {
-    final confirme = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(Textes.titreConfirmationArret),
-        content: const Text(Textes.messageConfirmationArret),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(Textes.boutonAnnulerArret),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(Textes.boutonConfirmerArret),
-          ),
-        ],
-      ),
-    );
-    if (confirme != true || !mounted) return;
-    ref.read(controleurPlancheProvider.notifier).abandonnerPlanche();
-    if (!mounted) return;
-    if (estDemo) {
-      ref.read(sessionEnCoursProvider.notifier).reinitialiser();
-      context.go('/');
-    } else {
-      context.go('/recapitulatif-seance');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final etat = ref.watch(controleurPlancheProvider);
@@ -162,9 +133,6 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
     }
 
     final moteur = etat.moteur;
-    final etatSession = ref.watch(sessionEnCoursProvider);
-    final estDemo =
-        etatSession is PatientCharge && etatSession.session.estDemo;
 
     return Scaffold(
       appBar: AppBar(title: const Text(Textes.titreJeu)),
@@ -174,7 +142,7 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
             Expanded(child: _zonePlanche(moteur)),
             SizedBox(
               width: 220,
-              child: _barreLaterale(moteur, estDemo),
+              child: _barreLaterale(moteur),
             ),
           ],
         ),
@@ -226,7 +194,7 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
     );
   }
 
-  Widget _barreLaterale(MoteurPlanche moteur, bool estDemo) {
+  Widget _barreLaterale(MoteurPlanche moteur) {
     final emotionCourante = moteur.emotionCible;
     final reste = moteur.resteDesCibles();
     return Padding(
@@ -277,17 +245,8 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => _terminerPlanche(moteur),
-              child: const Text(Textes.boutonJaiFini,
+              child: const Text(Textes.boutonTerminerPlanche,
                   style: TextStyle(fontSize: 20)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 56,
-            child: OutlinedButton(
-              onPressed: () => _confirmerArret(estDemo),
-              child: const Text(Textes.boutonArreter,
-                  style: TextStyle(fontSize: 18)),
             ),
           ),
         ],
@@ -325,7 +284,7 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
-                  Textes.libelleEmotion(emotion),
+                  '${Textes.emojiEmotion(emotion)} ${Textes.libelleEmotion(emotion)}',
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),

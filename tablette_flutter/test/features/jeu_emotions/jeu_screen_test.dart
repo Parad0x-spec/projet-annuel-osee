@@ -92,6 +92,22 @@ void main() {
   );
 
   testWidgets(
+    'chaque tuile emotion affiche son emoji devant le nom',
+    (WidgetTester tester) async {
+      await _monterAvecPlanche(tester);
+
+      for (final emotion in emotionsOrdonnees) {
+        expect(
+          find.text(
+            '${Textes.emojiEmotion(emotion)} ${Textes.libelleEmotion(emotion)}',
+          ),
+          findsOneWidget,
+        );
+      }
+    },
+  );
+
+  testWidgets(
     'selectionner une emotion met a jour la consigne courante',
     (WidgetTester tester) async {
       await _monterAvecPlanche(tester);
@@ -188,7 +204,7 @@ void main() {
       _simulerTap(tester, 100, 100);
       await tester.pump();
 
-      await tester.tap(find.text(Textes.boutonJaiFini));
+      await tester.tap(find.text(Textes.boutonTerminerPlanche));
       await tester.pump();
 
       expect(find.text(Textes.titreSelectionEmotions), findsOneWidget);
@@ -204,7 +220,7 @@ void main() {
       _simulerTap(tester, 100, 100);
       await tester.pump();
 
-      await tester.tap(find.text(Textes.boutonJaiFini));
+      await tester.tap(find.text(Textes.boutonTerminerPlanche));
       await tester.pump();
       await tester.tap(find.text(Textes.boutonValiderSelection));
       await tester.pump();
@@ -227,7 +243,7 @@ void main() {
       _simulerTap(tester, 100, 200);
       await tester.pump();
 
-      await tester.tap(find.text(Textes.boutonJaiFini));
+      await tester.tap(find.text(Textes.boutonTerminerPlanche));
       await tester.pump();
       await tester.pump();
 
@@ -238,21 +254,30 @@ void main() {
   );
 
   testWidgets(
-    'Arreter demande confirmation puis abandonne sans enregistrer la planche',
+    'un seul bouton de fin, sans option d\'abandon',
+    (WidgetTester tester) async {
+      await _monterAvecPlanche(tester);
+
+      expect(find.text(Textes.boutonTerminerPlanche), findsOneWidget);
+      expect(find.byType(OutlinedButton), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'terminer une planche incomplete l\'enregistre toujours dans la seance',
     (WidgetTester tester) async {
       final container = await _monterAvecPlanche(tester);
-
-      await tester.tap(find.text(Textes.boutonArreter));
-      await tester.pump();
-      expect(find.text(Textes.titreConfirmationArret), findsOneWidget);
-
-      await tester.tap(find.text(Textes.boutonConfirmerArret));
-      await tester.pump();
+      await _selectionnerEmotion(tester, emotionJoie);
+      _simulerTap(tester, 100, 100);
       await tester.pump();
 
-      expect(container.read(planchesSeanceProvider), isEmpty);
-      expect(container.read(controleurPlancheProvider), isA<AucunePlanche>());
-      expect(find.text(Textes.titreRecapitulatifSeance), findsOneWidget);
+      await tester.tap(find.text(Textes.boutonTerminerPlanche));
+      await tester.pump();
+      await tester.tap(find.text(Textes.boutonValiderSelection));
+      await tester.pump();
+      await tester.pump();
+
+      expect(container.read(planchesSeanceProvider), hasLength(1));
     },
   );
 }

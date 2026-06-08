@@ -65,14 +65,8 @@ class Textes {
   static const String consigneSelectionnerEmotion =
       'Sélectionne une émotion dans la liste.';
   static String compteurEmotion(int trouvees, int total) => '$trouvees/$total';
-  static const String boutonJaiFini = 'J\'ai fini';
+  static const String boutonTerminerPlanche = 'Terminer';
   static const String messageResteDesCibles = 'Il reste des cibles à trouver';
-  static const String boutonArreter = 'Arrêter';
-  static const String titreConfirmationArret = 'Arrêter la planche ?';
-  static const String messageConfirmationArret =
-      'La planche en cours sera abandonnée.';
-  static const String boutonConfirmerArret = 'Oui, arrêter';
-  static const String boutonAnnulerArret = 'Continuer';
 
   static const String titreSelectionEmotions = 'Émotions à évaluer';
   static const String consigneSelectionEmotions =
@@ -102,12 +96,21 @@ class Textes {
   static const String titreRecapitulatifSeance = 'Récapitulatif de la séance';
   static const String messageAucunePartieJouee =
       'Aucune planche jouée durant cette séance.';
-  static String plancheResume({
+  static String fragmentEmotionRecap({
+    required String emotionLibelle,
+    required int trouvees,
+    required int total,
+    required bool evaluee,
+  }) =>
+      evaluee
+          ? '$emotionLibelle $trouvees/$total'
+          : '$emotionLibelle non évaluée';
+  static String plancheResumeDetaille({
     required int numero,
-    required int numeroPlanche,
+    required String detailEmotions,
     required int scoreGlobal,
   }) =>
-      'Planche jouée $numero — Planche $numeroPlanche — score $scoreGlobal / 100';
+      'Planche $numero — $detailEmotions — score global $scoreGlobal / 100';
   static const String boutonGenererQrSession = 'Générer le QR de séance';
   static const String boutonQuitterSansTransferer = 'Quitter sans transférer';
 
@@ -123,6 +126,21 @@ class Textes {
         return emotionPeurLibelle;
       default:
         return emotion;
+    }
+  }
+
+  static String emojiEmotion(String emotion) {
+    switch (emotion) {
+      case 'joie':
+        return '😊';
+      case 'colere':
+        return '😡';
+      case 'tristesse':
+        return '😢';
+      case 'peur':
+        return '😨';
+      default:
+        return '';
     }
   }
 }
