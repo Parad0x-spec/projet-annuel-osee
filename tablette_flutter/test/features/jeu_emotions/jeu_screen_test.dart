@@ -122,7 +122,7 @@ void main() {
   );
 
   testWidgets(
-    'tap sur une mauvaise emotion : marqueur rouge PERSISTANT',
+    'le marqueur rouge est local a l\'emotion : visible sous joie, masque ailleurs',
     (WidgetTester tester) async {
       final container = await _monterAvecPlanche(tester);
       await _selectionnerEmotion(tester, emotionJoie);
@@ -134,8 +134,32 @@ void main() {
       final etat = container.read(controleurPlancheProvider) as PlancheEnCours;
       expect(etat.moteur.nbFauxPositifs(emotionJoie), 1);
 
-      await tester.pump(const Duration(milliseconds: 1500));
+      await _selectionnerEmotion(tester, emotionTristesse);
+      expect(find.byIcon(Icons.close), findsNothing);
+
+      await _selectionnerEmotion(tester, emotionJoie);
       expect(find.byIcon(Icons.close), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'tete trouvee sous sa vraie emotion : verte partout, plus jamais rouge',
+    (WidgetTester tester) async {
+      await _monterAvecPlanche(tester);
+      await _selectionnerEmotion(tester, emotionJoie);
+      _simulerTap(tester, 100, 200);
+      await tester.pump();
+      expect(find.byIcon(Icons.close), findsOneWidget);
+
+      await _selectionnerEmotion(tester, emotionColere);
+      _simulerTap(tester, 100, 200);
+      await tester.pump();
+      expect(find.byIcon(Icons.check), findsOneWidget);
+      expect(find.byIcon(Icons.close), findsNothing);
+
+      await _selectionnerEmotion(tester, emotionJoie);
+      expect(find.byIcon(Icons.check), findsOneWidget);
+      expect(find.byIcon(Icons.close), findsNothing);
     },
   );
 

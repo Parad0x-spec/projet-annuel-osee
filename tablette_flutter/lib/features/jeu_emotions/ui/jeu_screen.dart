@@ -16,7 +16,6 @@ class JeuScreen extends ConsumerStatefulWidget {
 class _JeuScreenState extends ConsumerState<JeuScreen> {
   final TransformationController _transformController =
       TransformationController();
-  final Set<int> _indicesRouges = <int>{};
   Planche? _plancheAjustee;
 
   @override
@@ -51,10 +50,7 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
   void _onTapDown(TapDownDetails details) {
     final x = details.localPosition.dx.round();
     final y = details.localPosition.dy.round();
-    final resultat = ref.read(controleurPlancheProvider.notifier).taper(x, y);
-    if (resultat is ResultatFauxPositif) {
-      setState(() => _indicesRouges.add(resultat.indexPersonnage));
-    }
+    ref.read(controleurPlancheProvider.notifier).taper(x, y);
   }
 
   Future<void> _terminerPlanche(MoteurPlanche moteur) async {
@@ -378,10 +374,13 @@ class _JeuScreenState extends ConsumerState<JeuScreen> {
   }
 
   Iterable<Widget> _marqueursRouges(MoteurPlanche moteur) {
+    final emotionCourante = moteur.emotionCible;
+    if (emotionCourante == null) return const <Widget>[];
     final indicesVerts = <int>{
       for (final emotion in emotionsOrdonnees) ...moteur.indicesTrouves(emotion),
     };
-    return _indicesRouges
+    return moteur
+        .indicesFauxPositifs(emotionCourante)
         .where((index) => !indicesVerts.contains(index))
         .map((index) {
       final perso = moteur.planche.personnages[index];

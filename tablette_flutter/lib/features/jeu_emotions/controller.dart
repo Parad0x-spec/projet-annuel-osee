@@ -103,6 +103,8 @@ class MoteurPlanche {
 
   final Map<String, Set<int>> _trouvesParEmotion = <String, Set<int>>{};
   final Map<String, int> _fauxPositifsParEmotion = <String, int>{};
+  final Map<String, Set<int>> _indicesFauxPositifsParEmotion =
+      <String, Set<int>>{};
   final List<Tap> _taps = <Tap>[];
   late final int _tempsDebutMs;
   String? _emotionCible;
@@ -116,6 +118,7 @@ class MoteurPlanche {
     for (final emotion in emotionsOrdonnees) {
       _trouvesParEmotion[emotion] = <int>{};
       _fauxPositifsParEmotion[emotion] = 0;
+      _indicesFauxPositifsParEmotion[emotion] = <int>{};
     }
   }
 
@@ -129,6 +132,8 @@ class MoteurPlanche {
   int nbFauxPositifs(String emotion) => _fauxPositifsParEmotion[emotion] ?? 0;
   Set<int> indicesTrouves(String emotion) =>
       Set.unmodifiable(_trouvesParEmotion[emotion] ?? const <int>{});
+  Set<int> indicesFauxPositifs(String emotion) =>
+      Set.unmodifiable(_indicesFauxPositifsParEmotion[emotion] ?? const <int>{});
 
   void changerEmotionCible(String emotion) {
     _emotionCible = emotion;
@@ -196,6 +201,7 @@ class MoteurPlanche {
     } else {
       _fauxPositifsParEmotion[emotionCourante] =
           (_fauxPositifsParEmotion[emotionCourante] ?? 0) + 1;
+      _indicesFauxPositifsParEmotion[emotionCourante]!.add(indexTouche);
       _taps.add(
         Tap(
           timestampMs: tempsMs,

@@ -135,6 +135,58 @@ void main() {
     });
   });
 
+  group('MoteurPlanche - indicesFauxPositifs par emotion', () {
+    test('aucun faux positif au depart pour toutes les emotions', () {
+      final m = _moteur();
+      for (final emotion in emotionsOrdonnees) {
+        expect(m.indicesFauxPositifs(emotion), isEmpty);
+      }
+    });
+
+    test(
+        'scenario soutenance : rouge local a l emotion, vert global apres trouvaille',
+        () {
+      final m = _moteur();
+
+      m.changerEmotionCible('joie');
+      m.taper(100, 200);
+      expect(m.indicesFauxPositifs('joie'), <int>{2});
+
+      m.changerEmotionCible('tristesse');
+      expect(m.indicesFauxPositifs('tristesse'), isEmpty);
+
+      m.changerEmotionCible('joie');
+      expect(m.indicesFauxPositifs('joie'), <int>{2});
+
+      m.changerEmotionCible('colere');
+      final r = m.taper(100, 200);
+      expect(r, isA<ResultatCible>());
+      expect(m.indicesTrouves('colere'), contains(2));
+    });
+
+    test(
+        'le compteur de score compte chaque tap fautif mais une seule croix affichee',
+        () {
+      final m = _moteur();
+      m.changerEmotionCible('joie');
+      m.taper(100, 200);
+      m.taper(100, 200);
+      m.taper(100, 200);
+      expect(m.nbFauxPositifs('joie'), 3);
+      expect(m.indicesFauxPositifs('joie'), <int>{2});
+    });
+
+    test('un faux positif n affecte pas les autres emotions', () {
+      final m = _moteur();
+      m.changerEmotionCible('joie');
+      m.taper(100, 200);
+      expect(m.indicesFauxPositifs('joie'), <int>{2});
+      expect(m.indicesFauxPositifs('colere'), isEmpty);
+      expect(m.indicesFauxPositifs('tristesse'), isEmpty);
+      expect(m.indicesFauxPositifs('peur'), isEmpty);
+    });
+  });
+
   group('MoteurPlanche - resteDesCibles et toutesEmotionsCompletes', () {
     test('vrai au depart car aucune cible trouvee', () {
       final m = _moteur();
