@@ -1,5 +1,7 @@
 # ADR-10 - Jeu a navigation libre entre emotions sur une planche
 
+> Note : la phrase de cet ADR affirmant que la decision ne modifie pas le canal de communication QR est corrigee par l'ADR-11. La structure du payload du message `session` a effectivement change et le protocole passe en version 3. Le reste de cet ADR demeure valide.
+
 ## Statut
 
 Accepte. Supersede partiellement l'ADR-08 sur la partie mode de jeu. L'ADR-08 reste valide pour tout ce qui concerne les planches scenes pre-dessinees, leur production, leur annotation et leur format ; seule la mecanique d'interaction du jeu est revisee ici.
