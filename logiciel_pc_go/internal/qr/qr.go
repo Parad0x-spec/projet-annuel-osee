@@ -19,7 +19,7 @@ const (
 	TypeAppairageTablette = "appairage_tablette"
 	TypeCreationPatient   = "creation_patient"
 	TypeSession           = "session"
-	VersionProtocole      = 2
+	VersionProtocole      = 3
 	tailleQRPixels        = 512
 )
 

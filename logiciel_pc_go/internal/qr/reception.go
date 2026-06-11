@@ -30,13 +30,35 @@ type PayloadAppairageTablette struct {
 	TabPub    string `json:"tab_pub"`
 }
 
+type ResultatEmotion struct {
+	Emotion          string `json:"emotion"`
+	NbCiblesTotal    int    `json:"nb_cibles_total"`
+	NbCiblesTrouvees int    `json:"nb_cibles_trouvees"`
+	NbFauxPositifs   int    `json:"nb_faux_positifs"`
+	Score            int    `json:"score"`
+	Evaluee          bool   `json:"evaluee"`
+}
+
+type PlancheJouee struct {
+	NumeroPlanche       int               `json:"numero_planche"`
+	ScoreGlobal         int               `json:"score_global"`
+	ResultatsParEmotion []ResultatEmotion `json:"resultats_par_emotion"`
+}
+
 type PayloadSession struct {
-	PatientID        string          `json:"patient_id"`
-	PatientInitiales string          `json:"patient_initiales"`
-	SessionDate      string          `json:"session_date"`
-	JeuType          string          `json:"jeu_type"`
-	Niveau           int             `json:"niveau"`
-	Manches          json.RawMessage `json:"manches"`
+	PatientID        string         `json:"patient_id"`
+	PatientInitiales string         `json:"patient_initiales"`
+	SessionDate      string         `json:"session_date"`
+	JeuType          string         `json:"jeu_type"`
+	Niveau           int            `json:"niveau"`
+	Planches         []PlancheJouee `json:"planches"`
+}
+
+var emotionsValides = map[string]bool{
+	"joie":      true,
+	"colere":    true,
+	"tristesse": true,
+	"peur":      true,
 }
 
 func LireChargeUtileQR(chargeUtileBase64 string) (Enveloppe, error) {
@@ -149,5 +171,37 @@ func VerifierSession(enveloppe Enveloppe, tabPub []byte) (PayloadSession, error)
 	if !crypto.Verifier(tabPub, messageSigne, signature) {
 		return PayloadSession{}, ErrSignatureInvalide
 	}
+	if err := validerPayloadSession(payload); err != nil {
+		return PayloadSession{}, err
+	}
 	return payload, nil
+}
+
+func validerPayloadSession(payload PayloadSession) error {
+	if len(payload.Planches) == 0 {
+		return fmt.Errorf("%w: aucune planche", ErrPayloadInvalide)
+	}
+	for _, planche := range payload.Planches {
+		if planche.ScoreGlobal < 0 || planche.ScoreGlobal > 100 {
+			return fmt.Errorf("%w: score_global hors bornes planche %d", ErrPayloadInvalide, planche.NumeroPlanche)
+		}
+		if len(planche.ResultatsParEmotion) == 0 {
+			return fmt.Errorf("%w: planche %d sans resultat d'emotion", ErrPayloadInvalide, planche.NumeroPlanche)
+		}
+		for _, resultat := range planche.ResultatsParEmotion {
+			if !emotionsValides[resultat.Emotion] {
+				return fmt.Errorf("%w: emotion inconnue %q", ErrPayloadInvalide, resultat.Emotion)
+			}
+			if resultat.Score < 0 || resultat.Score > 100 {
+				return fmt.Errorf("%w: score hors bornes emotion %q", ErrPayloadInvalide, resultat.Emotion)
+			}
+			if resultat.NbCiblesTotal < 0 || resultat.NbCiblesTrouvees < 0 || resultat.NbFauxPositifs < 0 {
+				return fmt.Errorf("%w: compteur negatif emotion %q", ErrPayloadInvalide, resultat.Emotion)
+			}
+			if resultat.NbCiblesTrouvees > resultat.NbCiblesTotal {
+				return fmt.Errorf("%w: cibles trouvees superieures au total emotion %q", ErrPayloadInvalide, resultat.Emotion)
+			}
+		}
+	}
+	return nil
 }

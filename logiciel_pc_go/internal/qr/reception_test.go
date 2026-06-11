@@ -37,11 +37,22 @@ func construireChargeUtileAppairageTablette(t *testing.T, pairingId string, tabP
 	return chargeUtile
 }
 
+const planchesValidesJSON = `[{"numero_planche":1,"score_global":82,"resultats_par_emotion":[` +
+	`{"emotion":"joie","nb_cibles_total":3,"nb_cibles_trouvees":3,"nb_faux_positifs":0,"score":100,"evaluee":true},` +
+	`{"emotion":"colere","nb_cibles_total":2,"nb_cibles_trouvees":1,"nb_faux_positifs":1,"score":45,"evaluee":true},` +
+	`{"emotion":"tristesse","nb_cibles_total":0,"nb_cibles_trouvees":0,"nb_faux_positifs":0,"score":0,"evaluee":false},` +
+	`{"emotion":"peur","nb_cibles_total":1,"nb_cibles_trouvees":1,"nb_faux_positifs":0,"score":100,"evaluee":true}]}]`
+
 func construireChargeUtileSession(t *testing.T, patientID, initiales, sessionDate, jeuType string, niveau int, tabPriv []byte, timestamp string) string {
 	t.Helper()
 	payloadJSON := fmt.Sprintf(
-		`{"patient_id":%q,"patient_initiales":%q,"session_date":%q,"jeu_type":%q,"niveau":%d,"manches":[]}`,
-		patientID, initiales, sessionDate, jeuType, niveau)
+		`{"patient_id":%q,"patient_initiales":%q,"session_date":%q,"jeu_type":%q,"niveau":%d,"planches":%s}`,
+		patientID, initiales, sessionDate, jeuType, niveau, planchesValidesJSON)
+	return signerEtEncoderPayloadSession(t, payloadJSON, tabPriv, timestamp)
+}
+
+func signerEtEncoderPayloadSession(t *testing.T, payloadJSON string, tabPriv []byte, timestamp string) string {
+	t.Helper()
 	messageSigne := fmt.Sprintf(`{"type":%q,"version":%d,"timestamp":%q,"payload":%s}`,
 		TypeSession, VersionProtocole, timestamp, payloadJSON)
 	signature := ed25519.Sign(ed25519.PrivateKey(tabPriv), []byte(messageSigne))
@@ -72,8 +83,50 @@ func TestVerifierSession_Succes(t *testing.T) {
 	if payload.JeuType != "emotions" || payload.Niveau != 3 {
 		t.Errorf("jeu_type/niveau = %q/%d", payload.JeuType, payload.Niveau)
 	}
-	if string(payload.Manches) != "[]" {
-		t.Errorf("manches = %s, attendu []", payload.Manches)
+	if len(payload.Planches) != 1 {
+		t.Fatalf("planches = %d, attendu 1", len(payload.Planches))
+	}
+	planche := payload.Planches[0]
+	if planche.NumeroPlanche != 1 || planche.ScoreGlobal != 82 {
+		t.Errorf("planche = %+v", planche)
+	}
+	if len(planche.ResultatsParEmotion) != 4 {
+		t.Fatalf("resultats_par_emotion = %d, attendu 4", len(planche.ResultatsParEmotion))
+	}
+	joie := planche.ResultatsParEmotion[0]
+	if joie.Emotion != "joie" || joie.NbCiblesTotal != 3 || joie.NbCiblesTrouvees != 3 || joie.Score != 100 || !joie.Evaluee {
+		t.Errorf("resultat joie = %+v", joie)
+	}
+	tristesse := planche.ResultatsParEmotion[2]
+	if tristesse.Emotion != "tristesse" || tristesse.Evaluee {
+		t.Errorf("resultat tristesse = %+v, attendu evaluee=false", tristesse)
+	}
+}
+
+func TestVerifierSession_AncienFormatManchesRejete(t *testing.T) {
+	tabPriv, tabPub := genererPaireEd25519DeTest(t)
+	payloadJSON := `{"patient_id":"id-123","patient_initiales":"MD","session_date":"2026-05-25T10:00:00.000Z","jeu_type":"emotions","niveau":3,"manches":[]}`
+	chargeUtile := signerEtEncoderPayloadSession(t, payloadJSON, tabPriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+	if _, err := VerifierSession(enveloppe, tabPub); !errors.Is(err, ErrPayloadInvalide) {
+		t.Errorf("erreur = %v, attendu ErrPayloadInvalide pour ancien format manches", err)
+	}
+}
+
+func TestVerifierSession_EmotionInconnueRejetee(t *testing.T) {
+	tabPriv, tabPub := genererPaireEd25519DeTest(t)
+	payloadJSON := `{"patient_id":"id-123","patient_initiales":"MD","session_date":"2026-05-25T10:00:00.000Z","jeu_type":"emotions","niveau":3,` +
+		`"planches":[{"numero_planche":1,"score_global":50,"resultats_par_emotion":[{"emotion":"degout","nb_cibles_total":1,"nb_cibles_trouvees":1,"nb_faux_positifs":0,"score":100,"evaluee":true}]}]}`
+	chargeUtile := signerEtEncoderPayloadSession(t, payloadJSON, tabPriv, "2026-05-25T10:00:05.000Z")
+	enveloppe, err := LireChargeUtileQR(chargeUtile)
+	if err != nil {
+		t.Fatalf("LireChargeUtileQR: %v", err)
+	}
+	if _, err := VerifierSession(enveloppe, tabPub); !errors.Is(err, ErrPayloadInvalide) {
+		t.Errorf("erreur = %v, attendu ErrPayloadInvalide pour emotion inconnue", err)
 	}
 }
 
@@ -192,7 +245,7 @@ func TestSerialiserPourSignature_FormatCompactStable(t *testing.T) {
 		Payload:   json.RawMessage(`{"pairing_id":"abc","tab_pub":"ZGVm"}`),
 		Signature: "doit-etre-ignoree",
 	}
-	attendu := `{"type":"appairage_tablette","version":2,"timestamp":"2026-05-11T10:00:00.000000Z","payload":{"pairing_id":"abc","tab_pub":"ZGVm"}}`
+	attendu := `{"type":"appairage_tablette","version":3,"timestamp":"2026-05-11T10:00:00.000000Z","payload":{"pairing_id":"abc","tab_pub":"ZGVm"}}`
 
 	obtenu, err := SerialiserPourSignature(enveloppe)
 	if err != nil {
