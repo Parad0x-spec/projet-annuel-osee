@@ -19,7 +19,7 @@ Session _sessionTest() => Session(
 
 void main() {
   group('construireQrSession', () {
-    test('produit une enveloppe session version 2 structurellement complete',
+    test('produit une enveloppe session version 3 structurellement complete',
         () async {
       final paire = await Crypto.genererPaireDeCles();
 

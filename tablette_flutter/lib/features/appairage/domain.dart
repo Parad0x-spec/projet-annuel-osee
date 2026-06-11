@@ -2,7 +2,7 @@ const String typeAppairagePc = 'appairage_pc';
 const String typeAppairageTablette = 'appairage_tablette';
 const String typeCreationPatient = 'creation_patient';
 const String typeSession = 'session';
-const int versionProtocole = 2;
+const int versionProtocole = 3;
 
 sealed class EtatAppairage {
   const EtatAppairage();
