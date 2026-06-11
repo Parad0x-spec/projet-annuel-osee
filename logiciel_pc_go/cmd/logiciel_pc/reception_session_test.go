@@ -20,7 +20,10 @@ import (
 func enveloppeSessionSignee(t *testing.T, patientID, initiales string, niveau int, tabPriv []byte) qr.Enveloppe {
 	t.Helper()
 	payloadJSON := fmt.Sprintf(
-		`{"patient_id":%q,"patient_initiales":%q,"session_date":"2026-05-25T10:00:00.000Z","jeu_type":"emotions","niveau":%d,"manches":[]}`,
+		`{"patient_id":%q,"patient_initiales":%q,"session_date":"2026-05-25T10:00:00.000Z","jeu_type":"emotions","niveau":%d,`+
+			`"planches":[{"numero_planche":1,"score_global":82,"resultats_par_emotion":[`+
+			`{"emotion":"joie","nb_cibles_total":3,"nb_cibles_trouvees":3,"nb_faux_positifs":0,"score":100,"evaluee":true},`+
+			`{"emotion":"colere","nb_cibles_total":2,"nb_cibles_trouvees":1,"nb_faux_positifs":1,"score":45,"evaluee":true}]}]}`,
 		patientID, initiales, niveau)
 	enveloppe := qr.Enveloppe{
 		Type:      qr.TypeSession,
@@ -86,6 +89,23 @@ func TestTraiterSession_RechargeAppairageEtStocke(t *testing.T) {
 	}
 	if liste[0].Niveau != 3 || liste[0].JeuType != "emotions" {
 		t.Errorf("session stockee = %+v", liste[0])
+	}
+
+	planches, err := depotSessions.ListerPlanchesParSession(ctx, liste[0].ID)
+	if err != nil {
+		t.Fatalf("ListerPlanchesParSession: %v", err)
+	}
+	if len(planches) != 1 {
+		t.Fatalf("planches stockees = %d, attendu 1", len(planches))
+	}
+	if planches[0].NumeroPlanche != 1 || planches[0].ScoreGlobal != 82 {
+		t.Errorf("planche stockee = %+v", planches[0])
+	}
+	if len(planches[0].ResultatsParEmotion) != 2 {
+		t.Fatalf("resultats emotion stockes = %d, attendu 2", len(planches[0].ResultatsParEmotion))
+	}
+	if planches[0].ResultatsParEmotion[0].Emotion != "joie" || planches[0].ResultatsParEmotion[0].Score != 100 {
+		t.Errorf("resultat emotion stocke = %+v", planches[0].ResultatsParEmotion[0])
 	}
 }
 

@@ -115,7 +115,7 @@ func traiterSession(ctx context.Context, session *sessionAppairage, depotAppaira
 		return "QR illisible. Date de session invalide."
 	}
 
-	if _, err := depotSessions.EnregistrerSession(ctx, payload.PatientID, sessionDate, payload.JeuType, payload.Niveau, enveloppe.Payload); err != nil {
+	if _, err := depotSessions.EnregistrerSession(ctx, payload.PatientID, sessionDate, payload.JeuType, payload.Niveau, planchesPourStockage(payload.Planches), enveloppe.Payload); err != nil {
 		if errors.Is(err, sessions.ErrPatientInconnu) {
 			return fmt.Sprintf("Patient inconnu (%s). Session non enregistree.", payload.PatientInitiales)
 		}
@@ -123,6 +123,29 @@ func traiterSession(ctx context.Context, session *sessionAppairage, depotAppaira
 	}
 
 	return fmt.Sprintf("Session recue pour patient %s - niveau %d", payload.PatientInitiales, payload.Niveau)
+}
+
+func planchesPourStockage(planches []qr.PlancheJouee) []sessions.PlancheJouee {
+	converties := make([]sessions.PlancheJouee, 0, len(planches))
+	for _, planche := range planches {
+		resultats := make([]sessions.ResultatEmotion, 0, len(planche.ResultatsParEmotion))
+		for _, r := range planche.ResultatsParEmotion {
+			resultats = append(resultats, sessions.ResultatEmotion{
+				Emotion:          r.Emotion,
+				NbCiblesTotal:    r.NbCiblesTotal,
+				NbCiblesTrouvees: r.NbCiblesTrouvees,
+				NbFauxPositifs:   r.NbFauxPositifs,
+				Score:            r.Score,
+				Evaluee:          r.Evaluee,
+			})
+		}
+		converties = append(converties, sessions.PlancheJouee{
+			NumeroPlanche:       planche.NumeroPlanche,
+			ScoreGlobal:         planche.ScoreGlobal,
+			ResultatsParEmotion: resultats,
+		})
+	}
+	return converties
 }
 
 func messageErreurVerification(err error) string {
