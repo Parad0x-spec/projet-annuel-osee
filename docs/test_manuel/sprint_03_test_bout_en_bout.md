@@ -22,25 +22,25 @@ Le bouton « Scanner QR tablette » de la fenêtre principale ouvre désormais u
 
 Lancer `logiciel_pc.exe` sur le PC Windows à partir du dossier de données vide. La fenêtre Fyne intitulée « Suivi patients » doit s'ouvrir, avec le panneau de gestion des patients vide, un champ de recherche, et en bas la zone « Appairage du dispositif » présentant les boutons « Generer QR appairage » et « Scanner QR tablette ». Le fichier `%USERPROFILE%\.projet_annuel\patients.db` doit être créé sur le disque. Aucun appairage n'est chargé en mémoire à ce stade puisque la base est vide.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 2 - Démarrage initial côté tablette
 
 Lancer l'application sur la Lenovo Tab P12. L'écran d'accueil intitulé « Atelier d'entraînement » doit s'afficher en orientation paysage, avec les boutons « Nouveau patient », « Patient existant » et « Paramètres ». La base SQLite de la tablette ne contient aucun appairage à ce stade.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 3 - Génération du QR d'appairage côté PC
 
 Sur le PC, cliquer sur « Generer QR appairage ». Une nouvelle fenêtre intitulée « QR d'appairage PC » doit s'ouvrir, affichant un `pairing_id` sous forme d'UUID, le QR code, et la consigne « Scannez ce QR depuis la tablette ». Noter le `pairing_id` affiché pour le recouper plus tard avec la base.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 4 - Scan du QR d'appairage par la tablette
 
 Sur la tablette, depuis l'écran d'accueil, appuyer sur « Nouveau patient », ce qui ouvre directement l'écran de scan caméra intitulé « Scan du QR ». Cadrer le QR d'appairage affiché sur le PC avec la caméra arrière de la tablette. La tablette doit détecter et décoder le QR, enregistrer la clé publique du PC et générer en réponse son propre QR de retour. L'écran doit basculer vers l'affichage du QR de retour avec la consigne de le faire scanner par le praticien.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 5 - Scan du QR de retour par le PC avec aperçu vidéo
 
@@ -50,13 +50,13 @@ Présenter la tablette affichant le QR de retour devant la webcam, en s'aidant d
 
 Tester aussi la sortie sans QR détecté : ouvrir la fenêtre de scan, présenter une image quelconque sans QR pendant quelques secondes, puis appuyer sur le bouton « Annuler ». La fenêtre doit se fermer immédiatement et la caméra doit être libérée, ce qui se vérifie en regardant la LED de la webcam si elle en a une, ou en réouvrant la fenêtre de scan tout de suite après pour confirmer qu'elle peut rouvrir la caméra sans erreur. Refaire le même test avec fermeture par la croix de la fenêtre au lieu du bouton « Annuler », le comportement doit être identique.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 6 - Vérification de la persistance de l'appairage en base
 
 Ouvrir `%USERPROFILE%\.projet_annuel\patients.db` avec l'outil SQLite et exécuter `SELECT pairing_id, substr(tab_pub, 1, 16), date_appairage, date_dernier_usage FROM appairage;`. La requête doit retourner exactement une ligne, dont le `pairing_id` correspond à celui noté à l'étape 3, avec un `tab_pub` non vide et une `date_appairage` renseignée. La colonne `date_dernier_usage` peut être vide à ce stade puisqu'aucune session n'a encore été reçue.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [ ] OK    - [ ] KO    - [x] Non testable
 
 ### Étape 7 - Redémarrage du logiciel PC et persistance
 
@@ -68,73 +68,73 @@ C'est le point critique introduit par la tâche 12. Fermer entièrement `logicie
 
 Sur le PC, dans le panneau de gestion des patients, cliquer sur « Nouveau patient ». Renseigner le formulaire avec un patient fictif, par exemple nom « Dupont » et prénom « Marie », la date de naissance et les notes étant optionnelles, puis valider par « Creer ». Le patient doit apparaître dans la liste sous la forme « Dupont Marie (MD) », les initiales MD étant calculées automatiquement à partir du prénom et du nom.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 9 - Génération du QR creation_patient avec niveau 3
 
 Dans la liste, sur la ligne du patient « Dupont Marie », cliquer sur « Demarrer une seance ». Une boîte de dialogue de choix du niveau s'ouvre, proposant cinq niveaux de difficulté. Laisser ou sélectionner « 3 - Moyen », puis valider. Une fenêtre intitulée « Seance pour MD - Niveau 3 » doit s'ouvrir, affichant le QR `creation_patient` signé et la consigne de le faire scanner par la tablette.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 10 - Scan du QR creation_patient et confirmation côté tablette
 
 Sur la tablette, depuis l'écran d'accueil, appuyer de nouveau sur « Nouveau patient » pour ouvrir le scanner, puis cadrer le QR `creation_patient` affiché sur le PC. Après vérification de la signature avec la clé publique du PC issue de l'appairage, la tablette doit basculer vers l'écran de confirmation intitulé « Patient chargé », affichant le texte « Patient MD chargé. Prêt à jouer. » ainsi que les boutons « Commencer le jeu » et « Annuler ».
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [ ] OK    - [ ] KO    - [x] Non testable
 
 ### Étape 11 - Accès à l'écran de configuration de partie
 
 Sur la tablette, depuis l'écran de confirmation patient, appuyer sur « Commencer le jeu ». L'écran intitulé « Configuration de la partie » doit s'afficher, présentant la consigne « Choisissez la planche » suivie de quatre boutons « Planche 1 » à « Planche 4 », puis la consigne « Choisissez l'émotion à chercher » suivie de quatre boutons « Joie », « Colère », « Tristesse » et « Peur », et en bas un bouton « Lancer la partie » initialement désactivé (grisé).
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 12 - Choix d'une planche et d'une émotion et lancement
 
 Appuyer sur « Planche 1 », le bouton doit se colorer en bleu pour signaler la sélection. Appuyer sur « Joie », le bouton doit se colorer en orange. Le bouton « Lancer la partie » doit alors devenir actif. Appuyer dessus. La tablette doit charger la planche en mémoire et basculer vers l'écran intitulé « Partie en cours », avec en haut la consigne « Trouve tous les enfants joie » et en bas les boutons « Arrêter » et « J'ai fini ».
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 13 - Vérification critique de la conversion des coordonnées de tap
 
 C'est le point technique le plus sensible de l'implémentation. Sur la planche affichée, repérer visuellement un visage clairement joyeux (large sourire) parmi les enfants. Taper précisément sur ce visage. Le résultat attendu est qu'un cercle vert avec une coche apparaisse exactement centré sur le visage tapé, et reste affiché. Tester sur trois visages joyeux différents répartis dans la planche (un en haut, un au centre, un en bas) pour s'assurer que la précision est constante quel que soit l'endroit. Si le cercle vert apparaît décalé par rapport au visage, c'est le symptôme d'un bug de conversion de coordonnées à corriger. Tester également après avoir zoomé puis dézoomé et panné la planche dans l'InteractiveViewer, pour confirmer que la conversion reste correcte sous transformation.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [ ] OK    - [x] KO    - [ ] Non testable
 
 ### Étape 14 - Comportement des feedbacks vert, rouge et neutre
 
 Taper sur un visage exprimant une autre émotion que joie (par exemple un visage en colère ou triste). Un cercle rouge avec une croix doit apparaître brièvement sur le visage tapé puis disparaître au bout d'environ une seconde. Taper ensuite dans une zone vide de la planche (un buisson, une zone de ciel, un coin sans personnage). Aucun feedback ne doit apparaître et rien ne doit changer dans les compteurs. Revérifier qu'un nouveau tap sur un visage joyeux affiche bien un cercle vert qui s'ajoute aux précédents sans les remplacer.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [ ] OK    - [x] KO    - [ ] Non testable
 
 ### Étape 15 - Fin automatique de la partie
 
 Poursuivre les taps jusqu'à avoir trouvé tous les visages joyeux de la planche. Au moment où le dernier visage joyeux est tapé, la tablette doit basculer automatiquement vers l'écran de transition sans qu'il soit nécessaire d'appuyer sur « J'ai fini ». Le score doit refléter le ratio cibles trouvées sur cibles totales avec déduction des éventuels faux positifs accumulés.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [ ] OK    - [ ] KO    - [x] Non testable
 
 ### Étape 16 - Écran de transition et étoiles
 
 L'écran intitulé « Résultat de la partie » doit afficher en haut une rangée de trois étoiles dont une à trois sont remplies en jaune selon le score (les autres en contour), suivie d'un message d'encouragement neutre. Deux boutons en bas proposent « Terminer la séance » et « Nouvelle partie ». Si la partie a été terminée sans faute ni cible ratée, trois étoiles pleines doivent être affichées.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 17 - Enchaînement d'une seconde partie avec autre planche et émotion
 
 Appuyer sur « Nouvelle partie » pour revenir à l'écran de configuration. Choisir cette fois « Planche 2 » et « Colère », puis lancer. Jouer la partie en mode plus rapide, par exemple en tapant seulement deux ou trois visages en colère puis en appuyant sur « J'ai fini ». L'écran de transition doit s'afficher avec un score correspondant à un nombre partiel de cibles trouvées, et donc probablement une ou deux étoiles. Cela valide que deux parties peuvent s'enchaîner dans la même séance.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 18 - Terminer la séance et récapitulatif
 
 Sur l'écran de transition de la seconde partie, appuyer sur « Terminer la séance ». L'écran intitulé « Récapitulatif de la séance » doit s'afficher, listant les deux parties jouées dans leur ordre, par exemple « Partie 1 — Planche 1, joie — score 100 / 100 » et « Partie 2 — Planche 2, colère — score 50 / 100 ». En bas, un bouton « Quitter sans transférer » et un bouton « Générer le QR de séance ».
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 19 - Génération et affichage du QR de séance
 
 Appuyer sur « Générer le QR de séance ». L'écran « Export de la séance » doit s'afficher avec le QR encodant le payload signé. Le payload contient maintenant la liste agrégée des deux parties jouées (et non plus une liste vide comme à la tâche 11), donc le QR est sensiblement plus dense qu'avant. Vérifier que le QR reste bien lisible visuellement et que la consigne « Faites scanner ce QR au praticien. » apparaît correctement avec le sous-texte « Session pour MD ».
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 20 - Scan du QR de séance par le PC avec aperçu vidéo
 
@@ -142,7 +142,7 @@ Sur le PC, cliquer sur « Scanner QR tablette ». La fenêtre dédiée « Scan d
 
 Dès que le QR est décodé avec succès, la fenêtre de scan se ferme automatiquement et le statut de la fenêtre principale affiche, après vérification de la signature avec la `tab_pub` rechargée à l'étape 7 et insertion en base, le message « Session recue pour patient MD - niveau 3 ». La réussite de cette vérification de signature après le redémarrage de l'étape 7 valide le rechargement de l'appairage depuis SQLite, comme à la version précédente du test.
 
-- [ ] OK    - [ ] KO    - [ ] Non testable
+- [x] OK    - [ ] KO    - [ ] Non testable
 
 ### Étape 21 - Vérification finale de la séance et des parties en base
 
