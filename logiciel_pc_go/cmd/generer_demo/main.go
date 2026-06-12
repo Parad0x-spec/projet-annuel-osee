@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
+	"projet_annuel/logiciel_pc_go/internal/export"
 	"projet_annuel/logiciel_pc_go/internal/patients"
 	"projet_annuel/logiciel_pc_go/internal/sessions"
 )
@@ -49,6 +51,7 @@ func genererBaseDemo(chemin string, force bool) error {
 	}
 	defer depotSessions.Fermer()
 
+	dossierExports := filepath.Join(filepath.Dir(chemin), "exports")
 	ctx := context.Background()
 	for _, pd := range patientsDemo {
 		patient, err := depotPatients.CreerPatient(ctx, pd.Nom, pd.Prenom, pd.DateNaissance, pd.Notes)
@@ -66,6 +69,14 @@ func genererBaseDemo(chemin string, force bool) error {
 			if _, err := depotSessions.EnregistrerSession(ctx, patient.PatientID, date, "emotions", niveau, planches, payload); err != nil {
 				return fmt.Errorf("enregistrer seance %d de %s: %w", i, patient.Initiales, err)
 			}
+		}
+
+		resumees, err := depotSessions.ResumeSeancesParPatient(ctx, patient.PatientID)
+		if err != nil {
+			return fmt.Errorf("resume seances de %s: %w", patient.Initiales, err)
+		}
+		if err := export.GenererClasseurPatient(patient, resumees, export.CheminExportPatient(dossierExports, patient)); err != nil {
+			return fmt.Errorf("export Excel de %s: %w", patient.Initiales, err)
 		}
 	}
 	return nil

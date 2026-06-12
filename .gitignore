@@ -50,6 +50,10 @@ logiciel_pc_go/vendor/
 *.sqlite
 *.sqlite3
 
+# Exports Excel de suivi patient (generes, jamais versionnes)
+exports/
+*.xlsx
+
 # Artefacts divers
 *.log
 *.tmp
