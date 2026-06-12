@@ -7,6 +7,9 @@ class Textes {
   static const String boutonPatientExistant = 'Patient existant';
   static const String boutonParametres = 'Paramètres';
   static const String boutonModeDemo = 'Mode démo';
+  static const String boutonReprendreSeance = 'Reprendre la séance';
+  static String patientEnCours(String initiales) =>
+      'Patient $initiales en cours';
 
   static const String titreAppairage = 'Appairage avec le PC';
   static const String consigneAppairage =

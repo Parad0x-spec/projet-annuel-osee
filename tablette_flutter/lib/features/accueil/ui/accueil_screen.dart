@@ -89,6 +89,7 @@ class AccueilScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeTextes = Theme.of(context).textTheme;
+    final etatSession = ref.watch(sessionEnCoursProvider);
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -103,6 +104,22 @@ class AccueilScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: _espacementTitreBoutons),
+                if (etatSession is PatientCharge) ...[
+                  Text(
+                    Textes.patientEnCours(
+                      etatSession.session.patient.patientInitiales,
+                    ),
+                    style: themeTextes.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: _espacementEntreBoutons),
+                  _construireBoutonTactile(
+                    context: context,
+                    libelle: Textes.boutonReprendreSeance,
+                    onPressed: () => context.go('/choix-planche'),
+                  ),
+                  const SizedBox(height: _espacementEntreBoutons),
+                ],
                 _construireBoutonTactile(
                   context: context,
                   libelle: Textes.boutonNouveauPatient,
