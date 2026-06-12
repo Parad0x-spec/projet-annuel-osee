@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -36,6 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("chemin base patients: %v", err)
 	}
+	dossierExports := filepath.Join(filepath.Dir(chemin), "exports")
 	depot, err := patients.OuvrirDepot(chemin)
 	if err != nil {
 		log.Fatalf("ouvrir base patients: %v", err)
@@ -72,7 +74,7 @@ func main() {
 	boutonScanner := widget.NewButton("Scanner QR tablette", func() {
 		statut.SetText("Fenetre de scan ouverte.")
 		ouvrirFenetreScan(logiciel, func(chargeUtile string) {
-			message := verifierChargeUtileScannee(session, depotAppairage, depotSessions, chargeUtile)
+			message := verifierChargeUtileScannee(session, depotAppairage, depotSessions, depot, dossierExports, chargeUtile)
 			fyne.Do(func() {
 				statut.SetText(message)
 			})

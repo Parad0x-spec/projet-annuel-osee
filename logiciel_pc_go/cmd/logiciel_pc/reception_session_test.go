@@ -7,11 +7,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"projet_annuel/logiciel_pc_go/internal/appairage_pc"
+	"projet_annuel/logiciel_pc_go/internal/export"
 	"projet_annuel/logiciel_pc_go/internal/patients"
 	"projet_annuel/logiciel_pc_go/internal/qr"
 	"projet_annuel/logiciel_pc_go/internal/sessions"
@@ -74,10 +76,14 @@ func TestTraiterSession_RechargeAppairageEtStocke(t *testing.T) {
 
 	session := &sessionAppairage{}
 	enveloppe := enveloppeSessionSignee(t, patient.PatientID, patient.Initiales, 3, tabPriv)
+	dossierExports := t.TempDir()
 
-	message := traiterSession(ctx, session, depotAppairage, depotSessions, enveloppe)
+	message := traiterSession(ctx, session, depotAppairage, depotSessions, depotPatients, dossierExports, enveloppe)
 	if !strings.Contains(message, "Session recue") {
 		t.Fatalf("message = %q, attendu confirmation de reception", message)
+	}
+	if strings.Contains(message, "export Excel non genere") {
+		t.Errorf("export Excel attendu reussi, message = %q", message)
 	}
 
 	liste, err := depotSessions.ListerSessionsParPatient(ctx, patient.PatientID)
@@ -106,6 +112,11 @@ func TestTraiterSession_RechargeAppairageEtStocke(t *testing.T) {
 	}
 	if planches[0].ResultatsParEmotion[0].Emotion != "joie" || planches[0].ResultatsParEmotion[0].Score != 100 {
 		t.Errorf("resultat emotion stocke = %+v", planches[0].ResultatsParEmotion[0])
+	}
+
+	cheminExcel := export.CheminExportPatient(dossierExports, patient)
+	if _, err := os.Stat(cheminExcel); err != nil {
+		t.Errorf("fichier Excel non genere a la reception : %v", err)
 	}
 }
 
@@ -141,7 +152,7 @@ func TestTraiterSession_PatientInconnu(t *testing.T) {
 	session := &sessionAppairage{}
 	enveloppe := enveloppeSessionSignee(t, "id-inexistant", "ZZ", 2, tabPriv)
 
-	message := traiterSession(ctx, session, depotAppairage, depotSessions, enveloppe)
+	message := traiterSession(ctx, session, depotAppairage, depotSessions, depotPatients, t.TempDir(), enveloppe)
 	if !strings.Contains(message, "Patient inconnu") {
 		t.Errorf("message = %q, attendu message patient inconnu", message)
 	}

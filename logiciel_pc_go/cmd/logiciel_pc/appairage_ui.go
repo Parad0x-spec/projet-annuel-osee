@@ -14,6 +14,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"projet_annuel/logiciel_pc_go/internal/appairage_pc"
+	"projet_annuel/logiciel_pc_go/internal/export"
+	"projet_annuel/logiciel_pc_go/internal/patients"
 	"projet_annuel/logiciel_pc_go/internal/qr"
 	"projet_annuel/logiciel_pc_go/internal/sessions"
 )
@@ -55,6 +57,8 @@ func verifierChargeUtileScannee(
 	session *sessionAppairage,
 	depotAppairage *appairage_pc.DepotAppairage,
 	depotSessions *sessions.DepotSessions,
+	depotPatients *patients.DepotPatients,
+	dossierExports string,
 	chargeUtile string,
 ) string {
 	enveloppe, err := qr.LireChargeUtileQR(chargeUtile)
@@ -69,7 +73,7 @@ func verifierChargeUtileScannee(
 	case qr.TypeAppairageTablette:
 		return traiterAppairageTablette(ctx, session, depotAppairage, enveloppe)
 	case qr.TypeSession:
-		return traiterSession(ctx, session, depotAppairage, depotSessions, enveloppe)
+		return traiterSession(ctx, session, depotAppairage, depotSessions, depotPatients, dossierExports, enveloppe)
 	default:
 		return "Type de QR inattendu."
 	}
@@ -94,7 +98,7 @@ func traiterAppairageTablette(ctx context.Context, session *sessionAppairage, de
 	return "Appairage enregistre."
 }
 
-func traiterSession(ctx context.Context, session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage, depotSessions *sessions.DepotSessions, enveloppe qr.Enveloppe) string {
+func traiterSession(ctx context.Context, session *sessionAppairage, depotAppairage *appairage_pc.DepotAppairage, depotSessions *sessions.DepotSessions, depotPatients *patients.DepotPatients, dossierExports string, enveloppe qr.Enveloppe) string {
 	tabPub := session.lireTabPub()
 	if len(tabPub) == 0 {
 		appairage, err := depotAppairage.LireAppairageActuel(ctx)
@@ -122,7 +126,23 @@ func traiterSession(ctx context.Context, session *sessionAppairage, depotAppaira
 		return fmt.Sprintf("Session non enregistree : %v", err)
 	}
 
-	return fmt.Sprintf("Session recue pour patient %s - niveau %d", payload.PatientInitiales, payload.Niveau)
+	message := fmt.Sprintf("Session recue pour patient %s - niveau %d", payload.PatientInitiales, payload.Niveau)
+	if err := genererExportPatient(ctx, depotPatients, depotSessions, dossierExports, payload.PatientID); err != nil {
+		return message + fmt.Sprintf(" (export Excel non genere : %v)", err)
+	}
+	return message
+}
+
+func genererExportPatient(ctx context.Context, depotPatients *patients.DepotPatients, depotSessions *sessions.DepotSessions, dossierExports, patientID string) error {
+	patient, err := depotPatients.LirePatientParID(ctx, patientID)
+	if err != nil {
+		return err
+	}
+	resumees, err := depotSessions.ResumeSeancesParPatient(ctx, patientID)
+	if err != nil {
+		return err
+	}
+	return export.GenererClasseurPatient(patient, resumees, export.CheminExportPatient(dossierExports, patient))
 }
 
 func planchesPourStockage(planches []qr.PlancheJouee) []sessions.PlancheJouee {
