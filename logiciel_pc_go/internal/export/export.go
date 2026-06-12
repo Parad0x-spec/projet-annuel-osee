@@ -224,6 +224,8 @@ func construireDetail(f *excelize.File, resumees []sessions.SeanceResumee) error
 
 func construireEvolution(f *excelize.File, resumees []sessions.SeanceResumee) error {
 	feuille := feuilleEvolution
+	f.SetColWidth(feuille, "A", "A", 14)
+	f.SetColWidth(feuille, "B", "E", 12)
 
 	f.SetCellValue(feuille, "A1", "Seance")
 	for j, emotion := range sessions.EmotionsOrdonnees {

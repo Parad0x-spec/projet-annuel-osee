@@ -28,12 +28,17 @@ func main() {
 }
 
 func genererBaseDemo(chemin string, force bool) error {
+	dossierExports := filepath.Join(filepath.Dir(chemin), "exports")
+
 	if _, err := os.Stat(chemin); err == nil {
 		if !force {
 			return fmt.Errorf("le fichier %q existe deja, relancez avec -force pour le regenerer", chemin)
 		}
 		if err := os.Remove(chemin); err != nil {
 			return fmt.Errorf("suppression du fichier existant: %w", err)
+		}
+		if err := nettoyerExportsDemo(dossierExports); err != nil {
+			return fmt.Errorf("nettoyage des exports existants: %w", err)
 		}
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("verification du fichier: %w", err)
@@ -51,7 +56,6 @@ func genererBaseDemo(chemin string, force bool) error {
 	}
 	defer depotSessions.Fermer()
 
-	dossierExports := filepath.Join(filepath.Dir(chemin), "exports")
 	ctx := context.Background()
 	for _, pd := range patientsDemo {
 		patient, err := depotPatients.CreerPatient(ctx, pd.Nom, pd.Prenom, pd.DateNaissance, pd.Notes)
@@ -134,4 +138,17 @@ func payloadSessionDemo(patient patients.Patient, date time.Time, niveau int, pl
 		Niveau:           niveau,
 		Planches:         planchesJSON,
 	})
+}
+
+func nettoyerExportsDemo(dossierExports string) error {
+	anciens, err := filepath.Glob(filepath.Join(dossierExports, "suivi_*.xlsx"))
+	if err != nil {
+		return err
+	}
+	for _, fichier := range anciens {
+		if err := os.Remove(fichier); err != nil {
+			return err
+		}
+	}
+	return nil
 }
