@@ -42,11 +42,13 @@ class ControleurSession extends Notifier<EtatSession> {
   }
 
   void charger(PayloadCreationPatient patient) {
+    ref.read(planchesSeanceProvider.notifier).vider();
     state = PatientCharge(SessionEnCours(patient));
     _persisterContexte(patient, estDemo: false);
   }
 
   void chargerDemo() {
+    ref.read(planchesSeanceProvider.notifier).vider();
     state = PatientCharge(SessionEnCours(patientDemo, estDemo: true));
     _persisterContexte(patientDemo, estDemo: true);
   }
