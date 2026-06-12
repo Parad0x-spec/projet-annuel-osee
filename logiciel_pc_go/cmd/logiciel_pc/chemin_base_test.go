@@ -38,3 +38,28 @@ func TestCheminBasePatientsDansHome_IdempotentSurDossierExistant(t *testing.T) {
 		t.Fatalf("deuxieme appel doit etre idempotent: %v", err)
 	}
 }
+
+func TestResoudreCheminBase_FlagVideEgaleComportementDefaut(t *testing.T) {
+	attendu, err := cheminBasePatients()
+	if err != nil {
+		t.Fatalf("cheminBasePatients: %v", err)
+	}
+	obtenu, err := resoudreCheminBase("")
+	if err != nil {
+		t.Fatalf("resoudreCheminBase(\"\"): %v", err)
+	}
+	if obtenu != attendu {
+		t.Errorf("flag vide = %q, attendu chemin par defaut %q", obtenu, attendu)
+	}
+}
+
+func TestResoudreCheminBase_FlagRempliRetourneTelQuel(t *testing.T) {
+	chemin := filepath.Join(t.TempDir(), "demo.db")
+	obtenu, err := resoudreCheminBase(chemin)
+	if err != nil {
+		t.Fatalf("resoudreCheminBase: %v", err)
+	}
+	if obtenu != chemin {
+		t.Errorf("flag rempli = %q, attendu %q", obtenu, chemin)
+	}
+}

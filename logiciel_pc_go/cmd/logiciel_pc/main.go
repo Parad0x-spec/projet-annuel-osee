@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 
@@ -19,6 +20,9 @@ import (
 const titreFenetrePrincipale = "Suivi patients"
 
 func main() {
+	dbFlag := flag.String("db", "", "chemin d'une base SQLite alternative (sinon base par defaut)")
+	flag.Parse()
+
 	clePrivee, clePublique, err := crypto.GenererPaireDeCles()
 	if err != nil {
 		log.Fatalf("generation cles PC: %v", err)
@@ -28,7 +32,7 @@ func main() {
 		clePubliquePC: clePublique,
 	}
 
-	chemin, err := cheminBasePatients()
+	chemin, err := resoudreCheminBase(*dbFlag)
 	if err != nil {
 		log.Fatalf("chemin base patients: %v", err)
 	}

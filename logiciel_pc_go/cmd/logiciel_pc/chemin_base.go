@@ -11,6 +11,13 @@ const (
 	nomFichierPatients = "patients.db"
 )
 
+func resoudreCheminBase(dbFlag string) (string, error) {
+	if dbFlag != "" {
+		return dbFlag, nil
+	}
+	return cheminBasePatients()
+}
+
 func cheminBasePatients() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
