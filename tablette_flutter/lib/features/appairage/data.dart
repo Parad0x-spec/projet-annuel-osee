@@ -116,16 +116,16 @@ class VerificateurEnveloppe {
     }
 
     final messageSigne = utf8.encode(
-      jsonEncode(<String, dynamic>{
-        'type': enveloppe.type,
-        'version': enveloppe.version,
-        'timestamp': enveloppe.timestamp,
-        'payload': <String, dynamic>{
+      ConstructeurEnveloppe.serialiserPourSignature(
+        type: enveloppe.type,
+        version: enveloppe.version,
+        timestamp: enveloppe.timestamp,
+        payload: <String, dynamic>{
           'patient_id': patientId,
           'patient_initiales': patientInitiales,
           'niveau_demande': niveauDemande,
         },
-      }),
+      ),
     );
 
     final signatureValide = await Crypto.verifier(
