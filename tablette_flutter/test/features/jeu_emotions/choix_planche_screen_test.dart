@@ -64,4 +64,17 @@ void main() {
       expect(boutonApres.onPressed, isNotNull);
     },
   );
+
+  testWidgets(
+    'la fleche retour ramene a l\'accueil sans reinitialiser le patient',
+    (WidgetTester tester) async {
+      final container = await _monter(tester);
+
+      await tester.tap(find.byTooltip(Textes.boutonRetourAccueil));
+      await tester.pumpAndSettle();
+
+      expect(find.text(Textes.titreAccueil), findsOneWidget);
+      expect(container.read(sessionEnCoursProvider), isA<PatientCharge>());
+    },
+  );
 }

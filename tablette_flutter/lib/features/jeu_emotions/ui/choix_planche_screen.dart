@@ -38,21 +38,36 @@ class _ChoixPlancheScreenState extends ConsumerState<ChoixPlancheScreen> {
     }
   }
 
+  void _retourAccueil() => context.go('/');
+
+  Widget _enveloppeRetour({required Widget child}) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _retourAccueil();
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final etatSession = ref.watch(sessionEnCoursProvider);
     if (etatSession is! PatientCharge) {
-      return Scaffold(
-        appBar: AppBar(title: const Text(Textes.titreChoixPlanche)),
-        body: SafeArea(
-          child: Center(
-            child: SizedBox(
-              width: 360,
-              height: 96,
-              child: ElevatedButton(
-                onPressed: () => context.go('/'),
-                child: const Text(Textes.boutonRetourAccueil,
-                    style: TextStyle(fontSize: 22)),
+      return _enveloppeRetour(
+        child: Scaffold(
+          appBar: AppBar(title: const Text(Textes.titreChoixPlanche)),
+          body: SafeArea(
+            child: Center(
+              child: SizedBox(
+                width: 360,
+                height: 96,
+                child: ElevatedButton(
+                  onPressed: _retourAccueil,
+                  child: const Text(Textes.boutonRetourAccueil,
+                      style: TextStyle(fontSize: 22)),
+                ),
               ),
             ),
           ),
@@ -62,9 +77,17 @@ class _ChoixPlancheScreenState extends ConsumerState<ChoixPlancheScreen> {
 
     final pretALancer = _planche != null && !_lancementEnCours;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(Textes.titreChoixPlanche)),
-      body: SafeArea(
+    return _enveloppeRetour(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(Textes.titreChoixPlanche),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: Textes.boutonRetourAccueil,
+            onPressed: _retourAccueil,
+          ),
+        ),
+        body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -124,6 +147,7 @@ class _ChoixPlancheScreenState extends ConsumerState<ChoixPlancheScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
