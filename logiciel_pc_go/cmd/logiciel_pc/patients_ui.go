@@ -17,6 +17,7 @@ import (
 
 	"projet_annuel/logiciel_pc_go/internal/patients"
 	"projet_annuel/logiciel_pc_go/internal/qr"
+	"projet_annuel/logiciel_pc_go/internal/sessions"
 )
 
 const tailleQRSeance = float32(500)
@@ -37,7 +38,7 @@ var mappingNiveau = map[string]int{
 	"5 - Tres difficile": 5,
 }
 
-func construirePanneauPatients(logiciel fyne.App, fenetre fyne.Window, session *sessionAppairage, depot *patients.DepotPatients) fyne.CanvasObject {
+func construirePanneauPatients(logiciel fyne.App, fenetre fyne.Window, session *sessionAppairage, depot *patients.DepotPatients, depotSessions *sessions.DepotSessions) fyne.CanvasObject {
 	var fichesAffichees []patients.Patient
 	rechercheActuelle := ""
 
@@ -63,6 +64,16 @@ func construirePanneauPatients(logiciel fyne.App, fenetre fyne.Window, session *
 			}
 		},
 	)
+	liste.OnSelected = func(id widget.ListItemID) {
+		if id < 0 || id >= len(fichesAffichees) {
+			return
+		}
+		fiche := fichesAffichees[id]
+		liste.UnselectAll()
+		if err := ouvrirFichePatient(logiciel, depotSessions, fiche); err != nil {
+			dialog.ShowError(err, fenetre)
+		}
+	}
 
 	rafraichir := func() {
 		ctx := context.Background()

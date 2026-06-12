@@ -81,7 +81,7 @@ func main() {
 		fyne.TextStyle{Bold: true},
 	)
 
-	panneauPatients := construirePanneauPatients(logiciel, fenetre, session, depot)
+	panneauPatients := construirePanneauPatients(logiciel, fenetre, session, depot, depotSessions)
 
 	piedDePage := container.NewVBox(
 		widget.NewSeparator(),
