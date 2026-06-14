@@ -16,8 +16,6 @@ tablette_flutter/.pub/
 tablette_flutter/build/
 tablette_flutter/android/.gradle/
 tablette_flutter/android/captures/
-tablette_flutter/android/gradlew
-tablette_flutter/android/gradlew.bat
 tablette_flutter/android/local.properties
 tablette_flutter/android/**/GeneratedPluginRegistrant.java
 tablette_flutter/android/key.properties
@@ -31,7 +29,6 @@ tablette_flutter/windows/
 tablette_flutter/web/
 tablette_flutter/coverage/
 tablette_flutter/test/.test_coverage.dart
-tablette_flutter/pubspec.lock
 
 # Go
 logiciel_pc_go/build/
