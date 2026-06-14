@@ -1,0 +1,145 @@
+/* ============================================================
+   ZENJI — snippet Obsidian (mode écran Tokyo Night)
+   Installation : déposer ce fichier dans  <coffre>/.obsidian/snippets/
+   puis l'activer dans  Paramètres → Apparence → Fragments CSS.
+   Conçu pour le thème sombre (Settings → Apparence → Sombre).
+   ============================================================ */
+
+/* ---------- Palette ---------- */
+.theme-dark {
+  --zj-bg:      #1a1b26;
+  --zj-deep:    #16161e;
+  --zj-surface: #24283b;
+  --zj-text:    #c0caf5;
+  --zj-text2:   #a9b1d6;
+  --zj-muted:   #565f89;
+  --zj-blue:    #7aa2f7;
+  --zj-cyan:    #7dcfff;
+  --zj-violet:  #bb9af7;
+  --zj-green:   #9ece6a;
+  --zj-yellow:  #e0af68;
+  --zj-orange:  #ff9e64;
+  --zj-red:     #f7768e;
+
+  /* fonds + texte */
+  --background-primary: var(--zj-bg);
+  --background-primary-alt: var(--zj-deep);
+  --background-secondary: var(--zj-deep);
+  --background-modifier-border: #2c3047;
+  --text-normal: var(--zj-text2);
+  --text-muted: var(--zj-muted);
+  --text-faint: var(--zj-muted);
+  --text-accent: var(--zj-cyan);
+  --text-accent-hover: var(--zj-cyan);
+  --link-color: var(--zj-cyan);
+  --link-external-color: var(--zj-cyan);
+
+  /* titres : JetBrains Mono bleu */
+  --h1-color: var(--zj-blue);
+  --h2-color: var(--zj-blue);
+  --h3-color: var(--zj-blue);
+  --h4-color: var(--zj-blue);
+  --h5-color: var(--zj-blue);
+  --h6-color: var(--zj-muted);
+  --h1-font: "JetBrains Mono", monospace;
+  --h2-font: "JetBrains Mono", monospace;
+  --h3-font: "JetBrains Mono", monospace;
+  --h4-font: "JetBrains Mono", monospace;
+  --h5-font: "JetBrains Mono", monospace;
+  --h6-font: "JetBrains Mono", monospace;
+  --h1-weight: 700;
+  --h2-weight: 700;
+  --h3-weight: 700;
+
+  /* corps : Inter */
+  --font-text: "Inter", sans-serif;
+
+  /* code */
+  --font-monospace: "JetBrains Mono", monospace;
+  --code-background: var(--zj-surface);
+  --code-normal: var(--zj-text);
+  --code-keyword: var(--zj-violet);
+  --code-function: var(--zj-blue);
+  --code-string: var(--zj-green);
+  --code-value: var(--zj-orange);
+  --code-comment: var(--zj-muted);
+  --code-property: var(--zj-cyan);
+
+  /* tableaux */
+  --table-header-background: var(--zj-surface);
+  --table-header-color: var(--zj-blue);
+  --table-row-even-background: #1e2030;
+  --table-border-color: #2c3047;
+
+  /* divers */
+  --hr-color: #2c3047;
+  --blockquote-border-color: var(--zj-muted);
+  --bold-color: var(--zj-text);
+  --italic-color: var(--zj-text2);
+  --tag-color: var(--zj-violet);
+  --tag-background: rgba(187, 154, 247, 0.12);
+}
+
+/* ---------- Titres : taille + lettrage ---------- */
+.theme-dark .markdown-preview-view h1,
+.theme-dark .markdown-source-view .HyperMD-header-1 {
+  letter-spacing: -0.01em;
+}
+
+/* en-têtes de tableau en mono */
+.theme-dark .markdown-preview-view th,
+.theme-dark .markdown-rendered th {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.82em;
+  letter-spacing: 0.03em;
+}
+
+/* code inline arrondi */
+.theme-dark .markdown-preview-view code:not([class*="language-"]),
+.theme-dark .markdown-rendered code:not([class*="language-"]),
+.theme-dark .cm-s-obsidian span.cm-inline-code {
+  color: var(--zj-violet);
+  background: var(--zj-surface);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* ---------- Encadrés sémantiques (callouts) ----------
+   Usage :  > [!note] Note   /  > [!command] Commande  etc.   */
+.theme-dark .callout {
+  border-radius: 0;
+  border-left: 3px solid rgb(var(--callout-color));
+  background: rgba(var(--callout-color), 0.09);
+}
+.theme-dark .callout-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* rôles sémantiques fixes */
+.theme-dark .callout[data-callout="note"]       { --callout-color: 122, 162, 247; } /* bleu */
+.theme-dark .callout[data-callout="info"]       { --callout-color: 122, 162, 247; }
+.theme-dark .callout[data-callout="command"]    { --callout-color: 187, 154, 247; } /* violet */
+.theme-dark .callout[data-callout="success"]    { --callout-color: 158, 206, 106; } /* vert */
+.theme-dark .callout[data-callout="check"]      { --callout-color: 158, 206, 106; }
+.theme-dark .callout[data-callout="warning"]    { --callout-color: 224, 175, 104; } /* jaune */
+.theme-dark .callout[data-callout="attention"]  { --callout-color: 224, 175, 104; }
+.theme-dark .callout[data-callout="danger"]     { --callout-color: 247, 118, 142; } /* rouge */
+.theme-dark .callout[data-callout="error"]      { --callout-color: 247, 118, 142; }
+.theme-dark .callout[data-callout="definition"] { --callout-color: 125, 207, 255; } /* cyan */
+.theme-dark .callout[data-callout="abstract"]   { --callout-color: 125, 207, 255; }
+.theme-dark .callout[data-callout="quote"]      { --callout-color: 86, 95, 137; }   /* gris */
+.theme-dark .callout[data-callout="cite"]       { --callout-color: 86, 95, 137; }
+.theme-dark .callout[data-callout="quote"] .callout-content,
+.theme-dark .callout[data-callout="cite"] .callout-content { font-style: italic; }
+
+/* ---------- Blocs de code ---------- */
+.theme-dark .markdown-preview-view pre,
+.theme-dark .markdown-rendered pre {
+  background: var(--zj-deep);
+  border: 1px solid #2c3047;
+  border-radius: 0;
+}
