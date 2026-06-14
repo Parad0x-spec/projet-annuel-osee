@@ -55,3 +55,9 @@ exports/
 *.log
 *.tmp
 *.bak
+
+# Instructions internes Claude Code (non publiees sur le repo public)
+/CLAUDE.md
+/INSTRUCTIONS_PREMIERE_SESSION_CLAUDE_CODE.md
+logiciel_pc_go/CLAUDE.md
+tablette_flutter/CLAUDE.md
